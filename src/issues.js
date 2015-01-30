@@ -5,42 +5,37 @@ var async = require('async');
 console.log('Getting issues');
 
 
-var all_json = "";
-var count = 50;
-var count_up = 0;
 var i = 0;
 var reqs = [];
-for (i = 0; i < count; i++) {
-	(function(i) {reqs.push(function (callback) {runRequest(callback, k=i);}) })(i);
+for (i = 0; i < 50; i++) {
+
+	(function(i) {reqs.push(function (callback) {issueRequest(callback, k=i);}) })(i);
 }
 
 async.parallel(reqs, function (err, result) {
-    process.stdout.write(result);
+    console.log(result);
 });
 
-process.stdout.write(all_json);
 
-function runRequest (callback, k) {
-	var t = k;
+function issueRequest (callback, i) {
 	var options = {
 		host: 'api.github.com',
-		path: '/repos/jquery/jquery/issues?access_token=db9842477822fb8a9a0aa330a846dcb5f656f9df=&status=all&per_page=100&page=' + t,
+		path: '/repos/jquery/jquery/issues?access_token=db9842477822fb8a9a0aa330a846dcb5f656f9df=&status=all&per_page=100&page=' + i,
 		headers: {'user-agent': 'jordan-heemskerk'},
 	};
 
-	console.log("send");
-	var string = "";
+	var resp = "";
 	console.log(options.path);
 	https.get(options, function(response) {
 		//console.log("statusCode: ", res.statusCode);
 		//console.log("headers: ", res.headers);
 
       response.on('data', function(response){
-	      string += response;
+	      resp += response;
 	  }); 
-	    response.on('end', function(){
-	      console.log(string);
-	    });  	
+	  response.on('end', function(){
+	      callback(null, resp);
+	  });  	
 
 	}).on('error', function(e) {
 		//handle error
