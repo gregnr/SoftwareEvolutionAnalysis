@@ -11,7 +11,7 @@ var count_up = 0;
 var i = 0;
 var reqs = [];
 for (i = 0; i < count; i++) {
-	reqs.push(function (callback) {runRequest(callback, k=i);});
+	(function(i) {reqs.push(function (callback) {runRequest(callback, k=i);}) })(i);
 }
 
 async.parallel(reqs, function (err, result) {
