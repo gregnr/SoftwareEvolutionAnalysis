@@ -40,8 +40,6 @@ var promptCredentials = function(callback) {
 			return;
 		}
 		
-		console.log(result);
-
 		username = result.username;
 		password = result.password;
 		
