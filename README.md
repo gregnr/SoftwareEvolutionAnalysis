@@ -39,6 +39,6 @@ Navigate into the repository's directory. Run the command:
 This will download dependencies used by the program into a **node_modules** directory.
 
 Run the program by entering:
-> node src/issues.js
+> node src/main.js
 
 This project is still in development.
