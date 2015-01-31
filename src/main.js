@@ -1,5 +1,7 @@
 var async = require("async");
+var gift = require("gift");
 var prompt = require("prompt");
+var mkdirp = require("mkdirp");
 var yargs = require("yargs")
     .alias("u", "username")
     .alias("p", "password")
@@ -135,10 +137,43 @@ var printIssues = function(callback) {
 
     for (var j = 0; j < gIssues.length; j++) {
         var issue = gIssues[j];
-        console.log(issue.number + ": " + issue.title);
+        //console.log(issue.number + ": " + issue.title);
     }
 
     return callback();
 }
 
-async.series([promptCredentials, loadIssues, printIssues]);
+var loadRepoHistory = function (callback) {
+   
+    //parse string params
+    var checkout_url = gUrl + ".git";
+    var repo_name = (/^.*\/([^\/]+)\.git$/).exec(checkout_url).slice(1);
+    var repo_path = "./.repo_cache/" + repo_name;
+    
+    
+    // create .repo_cache directory if it does not exist
+    mkdirp(repo_path, function(err) { 
+        
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        console.log("Cloning repository: " + repo_name);
+        
+        // clone repo to local filesystem using gift module
+        gift.clone(checkout_url, repo_path, 
+            
+            function (err, result) {    
+                
+                callback(); 
+
+            }
+        );
+
+    }); 
+
+
+}
+
+async.series([promptCredentials, loadIssues, loadRepoHistory, printIssues]);
