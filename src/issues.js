@@ -55,7 +55,7 @@ var promptCredentials = function(callback) {
 
     var properties = [
         {
-            name: "username", 
+            name: "username",
             validator: /^[a-zA-Z\s\-]+$/,
             warning: "Username must be only letters, spaces, or dashes"
         },
@@ -69,7 +69,7 @@ var promptCredentials = function(callback) {
             warning: "URL must be to a GitHub repository"
         }
     ];
-    
+
     //Init prompt
     prompt.start();
 
@@ -84,7 +84,7 @@ var promptCredentials = function(callback) {
         gUsername = result.username;
         gPassword = result.password;
         gUrl = result.url;
-        
+
         callback();
     });
 };
@@ -97,7 +97,7 @@ var issueRequest = function(callback, page_num) {
         headers: {
             "user-agent": "UnitTestBugAnalyzer",
             "Authorization": getBasicAuthenticationHeader(gUsername, gPassword)
-        },
+        }
     };
 
     // update user of progress
@@ -105,7 +105,7 @@ var issueRequest = function(callback, page_num) {
         process.stdout.clearLine();
         process.stdout.cursorTo(0);
         process.stdout.write("sending issueRequest for page " + page_num + " of " + giLastPage + " (" + Math.round((page_num/giLastPage) * 100) + "%)");    
-    } else  {
+    } else {
         //we don't know how many pages if giLastPage not updated
         process.stdout.write("sending issueRequest for page " + page_num + " of ?");    
     }
@@ -175,7 +175,6 @@ var fetchIssues = function(callback) {
             callback();
         }
     );
-
 };
 
 //Run async functions sequentially
