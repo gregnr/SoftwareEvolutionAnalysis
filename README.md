@@ -29,7 +29,7 @@ Install Node.js and its package manager NPM. See [these instructions](https://gi
 Clone the repository:
 > git clone [repo url]
 
-Run the command:
+Navigate into the repository's directory. Run the command:
 > npm install
 
 This will download dependencies used by the program into a **node_modules** directory.
