@@ -17,5 +17,9 @@ Tools:
 #### Codebases
 Ideally this tool will be able to analyze any code base that implements unit testing. Some specific codebases we may be interested in are **AngularJS**, **Bootstrap**, and **Cocos2d**.
 
+The best codebases to run this tool on will do issue tracking on GitHub, have a testing suite, and have a sufficient history for analysis. Some additional repos fitting these requirements are
+* facebook / react
+* rails / rails
+
 ## Milestones
 February 23 - Hand in project.
