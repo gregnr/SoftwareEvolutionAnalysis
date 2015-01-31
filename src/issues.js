@@ -1,7 +1,24 @@
-//Import dependancies
+//Import dependencies
 var https = require("https");
 var async = require("async");
 var prompt = require("prompt");
+var yargs = require("yargs")
+    .alias("u", "username")
+    .alias("p", "password")
+    .alias("r", "repo")
+    .alias("h", "help")
+    .describe("u", "GitHub username")
+    .describe("p", "GitHub password")
+    .describe("r", "GitHub repository")
+    .describe("h", "Show the help menu");
+
+var argv = yargs.argv;
+
+//If --help argument present, display help menu and return
+if (argv.help) {
+    yargs.showHelp();
+    return;
+}
 
 //Initialize variables
 var gUsername;
@@ -19,8 +36,8 @@ var getBasicAuthenticationHeader = function(username, password) {
 var getGithubPathFromUrl = function(url, page_num, issue_status, per_page) {
     
     //assign default values
-    issue_status = typeof issue_status !== 'undefined' ? issue_status : "all";
-    per_page = typeof per_page !== 'undefined' ? per_page : 100;
+    issue_status = typeof issue_status !== "undefined" ? issue_status : "all";
+    per_page = typeof per_page !== "undefined" ? per_page : 100;
 
     //Regex to extract path
     path_pattern = /\/\/[^\/]*\/(.*)$/; 
@@ -40,7 +57,7 @@ var getGithubPathFromUrl = function(url, page_num, issue_status, per_page) {
         return;
     }
  
-}
+};
 
 var getLastPageFromHeaders = function (headers) {
 
@@ -48,27 +65,61 @@ var getLastPageFromHeaders = function (headers) {
     
     return parseInt(sLastPage);
 
-}
+};
 
 //Async functions
 var promptCredentials = function(callback) {
 
-    var properties = [
-        {
-            name: "username",
-            validator: /^[a-zA-Z\s\-]+$/,
-            warning: "Username must be only letters, spaces, or dashes"
-        },
-        {
-            name: "password",
-            hidden: true
-        },
-        {
-            name: "url",
-            validator: /https?:\/\/github.com\/*/,
-            warning: "URL must be to a GitHub repository"
-        }
-    ];
+    var usernameConfig = {
+        name: "username",
+        description: "GitHub Username",
+        pattern: /^[a-zA-Z\s\-]+$/,
+        message: "Username must be only letters, spaces, or dashes"
+    };
+
+    var passwordConfig = {
+        name: "password",
+        description: "GitHub Password",
+        hidden: true
+    };
+
+    var repoConfig = {
+        name: "url",
+        description: "GitHub Repository URL",
+        pattern: /https?:\/\/github.com\/*/,
+        message: "URL must be to a GitHub repository"
+    };
+
+    var properties = [];
+
+    //Prompt user for arguments they didn't specify:
+
+    //Username
+    if (argv.username) {
+        gUsername = argv.username;
+    } else {
+        properties.push(usernameConfig);
+    }
+
+    //Password
+    if (argv.password) {
+        gPassword = argv.password;
+    } else {
+        properties.push(passwordConfig);
+    }
+
+    //Repository
+    if (argv.repo) {
+        gUrl = argv.repo;
+    } else {
+        properties.push(repoConfig);
+    }
+
+    //If user entered all arguments, return
+    if (properties.length === 0) {
+        callback();
+        return;
+    }
 
     //Init prompt
     prompt.start();
@@ -80,10 +131,18 @@ var promptCredentials = function(callback) {
             console.error(err);
             return;
         }
-        
-        gUsername = result.username;
-        gPassword = result.password;
-        gUrl = result.url;
+
+        if (result.username) {
+            gUsername = result.username;
+        }
+
+        if (result.password) {
+            gPassword = result.password;
+        }
+
+        if (result.url) {
+            gUrl = result.url;
+        }
 
         callback();
     });
@@ -106,7 +165,7 @@ var issueRequest = function(callback, page_num) {
         process.stdout.cursorTo(0);
         process.stdout.write("sending issueRequest for page " + page_num + " of " + giLastPage + " (" + Math.round((page_num/giLastPage) * 100) + "%)");    
     } else {
-        //we don't know how many pages if giLastPage not updated
+        //we don"t know how many pages if giLastPage not updated
         process.stdout.write("sending issueRequest for page " + page_num + " of ?");    
     }
 
@@ -134,7 +193,7 @@ var issueRequest = function(callback, page_num) {
     }).on("error", function(e) {
         callback(e);
     });
-}
+};
 
 var fetchIssues = function(callback) {
     
