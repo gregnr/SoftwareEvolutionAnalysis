@@ -77,18 +77,27 @@ var issueRequest = function(callback, page_num) {
     }
 
     https.get(options, function(response) {
-
-        giLastPage = getLastPageFromHeaders(response.headers);
-
-        var data = ""; 
+        
+        var data = "";
+        
         response.on("data", function(streaming_resp){
 
             //collect stream
             data += streaming_resp;
-
-        }); 
+        });
         
-        response.on("end", function(){
+        response.on("end", function() {
+        
+            //Check for error status codes
+            if (response.statusCode === 401) {
+                callback("Failed to authenticate user.");
+                return;
+            } else if (response.statusCode !== 200) {
+                callback("Error loading issues (HTTP status code " + response.statusCode + ").");
+                return;
+            }
+            
+            giLastPage = getLastPageFromHeaders(response.headers);
 
             //push data on to global gIssues array
             gIssues.push(JSON.parse(data));
@@ -111,6 +120,7 @@ var fetchIssues = function(callback) {
         
         //repeating function call
         function (callback) {
+        
             (function(page) {
                 issueRequest(callback, page);
             })(page);
@@ -120,11 +130,17 @@ var fetchIssues = function(callback) {
         // async.doWhilst stops itteration when this function returns false
         function() { 
             //Note that giLastPage is dynamically updated based on request results
-            return page < giLastPage;  
+            return page < giLastPage;
         },
 
         //called after itteration stops
-        function (err) { 
+        function (err) {
+        
+            if (err) {
+                process.stdout.write("\n");
+                callback(err);
+                return;
+            }
 
             process.stdout.clearLine();
             process.stdout.cursorTo(0);
@@ -151,4 +167,4 @@ module.exports.get = function (callback, user, pass, repo) {
     gUrl = repo;    
 
     fetchIssues(callback);
-}
+};

@@ -88,7 +88,7 @@ var promptCredentials = function(callback) {
     //Init prompt
     prompt.start();
 
-    //Prompt for Github username and password
+    //Prompt for arguments
     prompt.get(properties, function (err, result) {
 
         if (err) {
@@ -116,16 +116,11 @@ var loadIssues = function(callback) {
     
     issues.get(
 
-        function (err, result) {
-        
-            if (err) {
-                console.error(err);
-                return;
-            }            
+        function (err, result) {         
     
             gIssues = result;
             callback(err, result);
-
+            return;
         }, 
 
         gUsername,
@@ -133,7 +128,7 @@ var loadIssues = function(callback) {
         gUrl
     );
 
-}
+};
 
 var printIssues = function(callback) {
 
@@ -164,7 +159,7 @@ var printIssues = function(callback) {
 
 
     return callback();
-}
+};
 
 
 var scrapeCommits = function (firstCommitOnMaster, callback) {
@@ -180,7 +175,7 @@ var scrapeCommits = function (firstCommitOnMaster, callback) {
     });
 
     history.start();
-}
+};
 
 var loadRepoHistory = function (callback) {
    
@@ -239,15 +234,13 @@ var loadRepoHistory = function (callback) {
                 .then(function (firstCommitOnMaster) {
                     scrapeCommits(firstCommitOnMaster, callback); 
                 });
-
         }
-
-        
-            
-            
     }); 
+};
 
-
-}
-
-async.series([promptCredentials, loadIssues, loadRepoHistory, printIssues]);
+async.series([promptCredentials, loadIssues, loadRepoHistory, printIssues], function(err) {
+    
+    if (err) {
+        console.error(err);
+    }
+});
