@@ -2,6 +2,7 @@ var async = require("async");
 var nodegit = require("nodegit")
 var prompt = require("prompt");
 var mkdirp = require("mkdirp");
+var moment = require("moment");
 var yargs = require("yargs")
     .alias("u", "username")
     .alias("p", "password")
@@ -141,10 +142,26 @@ var printIssues = function(callback) {
         //console.log(issue.number + ": " + issue.title);
     }
 
+    for (var i = 0; i < gCommits.length; i++) {
+        
+        var format = "MMM DD YYYY HH:mm:ss";
+        gCommits[i].moment = moment((/.{4}(.{20}).*/).exec(gCommits[i].date()).slice(1), format);
+
+    }
+
+    gCommits.sort(function (a,b) {
+        
+        if (a.moment > b.moment) return 1;
+        else if (a.moment < b.moment) return -1;
+        else return 0;
+
+    });
+    
     for (var k = 0; k < gCommits.length; k++) {
         var commit = gCommits[k];
-        console.log("commit: " + commit.sha() + " on " + commit.date());;
+        console.log("commit: " + commit.sha() + " on " + commit.moment.format("YYYY MM DD HH:mm:ss"));
     }
+
 
     return callback();
 }
