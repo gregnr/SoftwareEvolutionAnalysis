@@ -67,13 +67,13 @@ var issueRequest = function(callback, page_num) {
         process.stdout.clearLine();
         process.stdout.cursorTo(0);
        
-        process.stdout.write("sending issueRequest for page " + page_num + " of " +
+        process.stdout.write("Getting Issues from GitHub. Page " + page_num + " of " +
             giLastPage + " (" + Math.round((page_num/giLastPage) * 100) +
             "%)"); 
    
     } else {
         //we don"t know how many pages if giLastPage not updated
-        process.stdout.write("sending issueRequest for page " + page_num + " of ?");    
+        process.stdout.write("Getting Issues From GitHub. Page " + page_num + " of ?");    
     }
 
     https.get(options, function(response) {
@@ -126,6 +126,11 @@ var fetchIssues = function(callback) {
         //called after itteration stops
         function (err) { 
 
+            process.stdout.clearLine();
+            process.stdout.cursorTo(0);
+
+            process.stdout.write("Getting Issues from GitHub. Page " + giLastPage + " of " +
+            giLastPage + " (100%)"); 
             //write out a \n when done with updating user
             process.stdout.write("\n"); 
             
