@@ -132,10 +132,6 @@ var loadIssues = function(callback) {
 
 var printIssues = function(callback) {
 
-    for (var j = 0; j < gIssues.length; j++) {
-        var issue = gIssues[j];
-        //console.log(issue.number + ": " + issue.title);
-    }
 
     for (var i = 0; i < gCommits.length; i++) {
         
@@ -152,11 +148,37 @@ var printIssues = function(callback) {
 
     });
     
-    for (var k = 0; k < gCommits.length; k++) {
-        var commit = gCommits[k];
-        console.log("commit: " + commit.sha() + " on " + commit.moment.format("YYYY MM DD HH:mm:ss"));
+    var week  = gCommits[0].moment.clone();
+    var finalWeek = gCommits[gCommits.length-1].moment.clone();
+    var openIssues = [];
+    var numWeeks = 0;
+    
+    while (week < finalWeek) {
+        for (var j = 0; j < gIssues.length; j++) {
+            var issue = gIssues[j];
+            var issue_opened = moment(issue.created_at);
+            if (issue.pull_request !== undefined) continue;
+            if (issue_opened < week.clone().add(1, "week")  && 
+                issue_opened > week) {
+                if (openIssues[numWeeks] == undefined) {
+                    openIssues[numWeeks] = 1;
+                } else {
+                    openIssues[numWeeks]++;
+                }
+            }
+        }
+        week.add(1, "week");
+        numWeeks++;
     }
 
+    // prints all data points
+    for (var k = 0; k < numWeeks; k++) {
+        if (openIssues[k] == undefined) {
+            console.log(k + ",0");
+        } else {
+            console.log(k +"," + openIssues[k]);
+        }
+    }
 
     return callback();
 };
