@@ -132,10 +132,12 @@ var loadIssues = function(callback) {
 
 var printIssues = function(callback) {
 
-    for (var j = 0; j < gIssues.length; j++) {
+    /*for (var j = 0; j < gIssues.length; j++) {
         var issue = gIssues[j];
         //console.log(issue.number + ": " + issue.title);
-    }
+    }*/
+    
+    console.log("printing issues");
 
     for (var i = 0; i < gCommits.length; i++) {
         
@@ -152,11 +154,115 @@ var printIssues = function(callback) {
 
     });
     
-    for (var k = 0; k < gCommits.length; k++) {
-        var commit = gCommits[k];
-        console.log("commit: " + commit.sha() + " on " + commit.moment.format("YYYY MM DD HH:mm:ss"));
+    console.log(gCommits.length);
+    
+    //for (var k = 0; k < gCommits.length / 10; k++) {
+    for (var k = 0; k < 1; k++) {
+        
+        //var commit = gCommits[k];
+        var commit = gCommits[gCommits.length - 1];
+        
+        //console.log("commit: " + commit.sha() + " on " + commit.moment.format("YYYY MM DD HH:mm:ss"));
+        
+        var rootTree = commit.getTree().then(function(rootTree) {
+        
+            var testEntry = rootTree.entryByPath("test/unit");
+            //var testEntry = rootTree.getEntry("test/unit");
+            console.log(testEntry);
+            
+            testEntry.isRejected(function(test) {
+                console.log(test);
+            });
+            
+            return testEntry;
+            
+        }).then(function(entry) {
+            console.log(".then");
+            
+            if (!entry) {
+                
+                console.log("entry is null yo");
+            }
+            //console.log(entry.filename());
+            
+            if (entry.isTree()) {
+            
+                var repo = commit.owner();
+                var oid = entry.oid();
+                
+                return repo.getTree(oid);
+                
+            } else {
+            
+                console.error("[DEV] error telling user this is not a directory");
+            }
+            
+            return null;
+            
+        }).then(function(tree) {
+        
+            return tree.entries();
+            
+        }).then(function(entries) {
+            
+            var asyncFunctions = [];
+        
+            for (var l = 0; l < entries.length; l++) {
+                
+                var entry = entries[l];
+                
+                (function(entry) {
+                
+                    asyncFunctions.push(function(callback) {
+                        
+                        entry.getBlob().then(function(blob) {
+                        
+                            var numberLines = blob.content().toString().split("\n").length - 1;
+                            
+                            callback(null, numberLines);
+                        });
+                    });
+                    
+                })(entry);
+            }
+            
+            async.parallel(asyncFunctions, function(err, fileLines) {
+                
+                var lineSum = 0;
+                
+                for (var i = 0; i < fileLines.length; i++) {
+                    
+                    lineSum += fileLines[i];
+                }
+                
+                console.log("lineSum", lineSum);
+            });
+        });
+        
+            /*entries.name().then(function(name) {
+                console.log("name", name);                
+            });*/
+        
+            /*for (var l = 0; l < entries.length; l++) {
+                
+                var entry = entries[l];
+                console.log("entry", entry.filename());
+        });*/
+        
+        
+        /*if (testEntry && testEntry.isTree()) {
+        
+            var testTree = testEntry.getTree();
+            var testTreeEntries = testTree.entries();
+            
+            for (var i = 0; i < testTreeEntries.length; i++) {
+                
+                var entry = testTreeEntries[i];
+                
+                console.log(entry.name);
+            }
+        }*/
     }
-
 
     return callback();
 };
@@ -238,7 +344,7 @@ var loadRepoHistory = function (callback) {
     }); 
 };
 
-async.series([promptCredentials, loadIssues, loadRepoHistory, printIssues], function(err) {
+async.series([promptCredentials, /*loadIssues,*/ loadRepoHistory, printIssues], function(err) {
     
     if (err) {
         console.error(err);
