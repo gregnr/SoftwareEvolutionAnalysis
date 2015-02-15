@@ -7,10 +7,12 @@ var yargs = require("yargs")
     .alias("u", "username")
     .alias("p", "password")
     .alias("r", "repo")
+    .alias("t", "testdir")
     .alias("h", "help")
     .describe("u", "GitHub username")
     .describe("p", "GitHub password")
     .describe("r", "GitHub repository")
+    .describe("t", "Unit test directory")
     .describe("h", "Show the help menu");
 
 var issues = require("./issues");
@@ -30,6 +32,7 @@ var gCommits = [];
 var gUsername;
 var gPassword;
 var gUrl;
+var gTestDirectory;
 
 //Async functions
 var promptCredentials = function(callback) {
@@ -52,6 +55,12 @@ var promptCredentials = function(callback) {
         description: "GitHub Repository URL",
         pattern: /https?:\/\/github.com\/*/,
         message: "URL must be to a GitHub repository"
+    };
+
+    var testdirConfig = {
+        name: "testdir",
+        description: "Unit Test Directory",
+        message: "Directory containing unit tests to analyze"
     };
 
     var properties = [];
@@ -77,6 +86,13 @@ var promptCredentials = function(callback) {
         gUrl = argv.repo;
     } else {
         properties.push(repoConfig);
+    }
+
+    //Test directory
+    if (argv.testdir) {
+        gTestDirectory = argv.testdir;
+    } else {
+        properties.push(testdirConfig);
     }
 
     //If user entered all arguments, return
@@ -108,6 +124,10 @@ var promptCredentials = function(callback) {
             gUrl = result.url;
         }
 
+        if (result.testdir) {
+            gTestDirectory = result.testdir;
+        }
+
         callback();
     });
 };
@@ -132,12 +152,10 @@ var loadIssues = function(callback) {
 
 var printIssues = function(callback) {
 
-    /*for (var j = 0; j < gIssues.length; j++) {
+    for (var j = 0; j < gIssues.length; j++) {
         var issue = gIssues[j];
         //console.log(issue.number + ": " + issue.title);
-    }*/
-    
-    console.log("printing issues");
+    }
 
     for (var i = 0; i < gCommits.length; i++) {
         
@@ -153,118 +171,106 @@ var printIssues = function(callback) {
         else return 0;
 
     });
+
+    var asyncFunctions = [];
     
-    console.log(gCommits.length);
-    
-    //for (var k = 0; k < gCommits.length / 10; k++) {
-    for (var k = 0; k < 1; k++) {
+    for (var k = 0; k < gCommits.length; k++) {
         
-        //var commit = gCommits[k];
-        var commit = gCommits[gCommits.length - 1];
+        var commit = gCommits[k];
         
-        //console.log("commit: " + commit.sha() + " on " + commit.moment.format("YYYY MM DD HH:mm:ss"));
-        
-        var rootTree = commit.getTree().then(function(rootTree) {
-        
-            var testEntry = rootTree.entryByPath("test/unit");
-            //var testEntry = rootTree.getEntry("test/unit");
-            console.log(testEntry);
-            
-            testEntry.isRejected(function(test) {
-                console.log(test);
-            });
-            
-            return testEntry;
-            
-        }).then(function(entry) {
-            console.log(".then");
-            
-            if (!entry) {
-                
-                console.log("entry is null yo");
-            }
-            //console.log(entry.filename());
-            
-            if (entry.isTree()) {
-            
-                var repo = commit.owner();
-                var oid = entry.oid();
-                
-                return repo.getTree(oid);
-                
-            } else {
-            
-                console.error("[DEV] error telling user this is not a directory");
-            }
-            
-            return null;
-            
-        }).then(function(tree) {
-        
-            return tree.entries();
-            
-        }).then(function(entries) {
-            
-            var asyncFunctions = [];
-        
-            for (var l = 0; l < entries.length; l++) {
-                
-                var entry = entries[l];
-                
-                (function(entry) {
-                
-                    asyncFunctions.push(function(callback) {
+        (function(commit) {
+
+            asyncFunctions.push(function(callback) {
+
+                var rootTree = commit.getTree().then(function(rootTree) {
+
+                    return rootTree.entryByPath(gTestDirectory);
+                    
+                }).then(function(entry) {
+                    
+                    if (entry.isTree()) {
+                    
+                        var repo = commit.owner();
+                        var oid = entry.oid();
                         
-                        entry.getBlob().then(function(blob) {
+                        return repo.getTree(oid);
                         
-                            var numberLines = blob.content().toString().split("\n").length - 1;
+                    } else {
+                        
+                        //Entry was a file, not a directory;
+                        callback(null, {
+                            moment: commit.moment,
+                            lines: 0
+                        });
+                    }
+                    
+                    return null;
+                    
+                }, function(error) {
+
+                    callback(null, {
+                        moment: commit.moment,
+                        lines: 0
+                    });
+
+                }).then(function(tree) {
+                
+                    return tree.entries();
+                    
+                }).then(function(entries) {
+                    
+                    var asyncFunctions = [];
+                
+                    for (var i = 0; i < entries.length; i++) {
+                        
+                        var entry = entries[i];
+                        
+                        (function(entry) {
+                        
+                            asyncFunctions.push(function(callback) {
+                                
+                                entry.getBlob().then(function(blob) {
+                                
+                                    var numberLines = blob.content().toString().split("\n").length - 1;
+
+                                    callback(null, numberLines);
+                                });
+                            });
                             
-                            callback(null, numberLines);
+                        })(entry);
+                    }
+                    
+                    async.series(asyncFunctions, function(err, fileLines) {
+                        
+                        var lineSum = 0;
+                        
+                        for (var i = 0; i < fileLines.length; i++) {
+                            
+                            lineSum += fileLines[i];
+                        }
+
+                        callback(null, {
+                            moment: commit.moment,
+                            lines: lineSum
                         });
                     });
-                    
-                })(entry);
-            }
-            
-            async.parallel(asyncFunctions, function(err, fileLines) {
-                
-                var lineSum = 0;
-                
-                for (var i = 0; i < fileLines.length; i++) {
-                    
-                    lineSum += fileLines[i];
-                }
-                
-                console.log("lineSum", lineSum);
+                });
             });
-        });
-        
-            /*entries.name().then(function(name) {
-                console.log("name", name);                
-            });*/
-        
-            /*for (var l = 0; l < entries.length; l++) {
-                
-                var entry = entries[l];
-                console.log("entry", entry.filename());
-        });*/
-        
-        
-        /*if (testEntry && testEntry.isTree()) {
-        
-            var testTree = testEntry.getTree();
-            var testTreeEntries = testTree.entries();
-            
-            for (var i = 0; i < testTreeEntries.length; i++) {
-                
-                var entry = testTreeEntries[i];
-                
-                console.log(entry.name);
-            }
-        }*/
+
+        })(commit);
     }
 
-    return callback();
+    async.series(asyncFunctions, function(err, lineCountEntries) {
+
+        for (var i = 0; i < lineCountEntries.length; i++) {
+
+            var lineCountEntry = lineCountEntries[i];
+
+            console.log(lineCountEntry.moment.format("YYYY MM DD HH:mm:ss") + ":", lineCountEntry.lines + " lines");
+        }
+
+        callback();
+    });
 };
 
 
@@ -344,7 +350,7 @@ var loadRepoHistory = function (callback) {
     }); 
 };
 
-async.series([promptCredentials, /*loadIssues,*/ loadRepoHistory, printIssues], function(err) {
+async.series([promptCredentials, loadIssues, loadRepoHistory, printIssues], function(err) {
     
     if (err) {
         console.error(err);
