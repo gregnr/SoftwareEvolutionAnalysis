@@ -168,7 +168,7 @@ var getLineSum = function(commit, callback) {
         } else {
             
             //Entry was a file, not a directory;
-            callback(null, {
+            callback({
                 moment: commit.moment,
                 lines: 0
             });
@@ -178,7 +178,7 @@ var getLineSum = function(commit, callback) {
         
     }, function(error) {
 
-        callback(null, {
+        callback({
             moment: commit.moment,
             lines: 0
         });
