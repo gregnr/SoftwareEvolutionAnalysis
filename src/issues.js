@@ -1,9 +1,6 @@
 //Import dependencies
 var https = require("https");
 var async = require("async");
-var fs = require("fs");
-var moment = require("moment");
-var mkdirp = require("mkdirp");
 
 //Initialize variables
 var gUsername;
@@ -18,7 +15,7 @@ var getBasicAuthenticationHeader = function(username, password) {
     return "Basic " + new Buffer(username + ":" + password).toString("base64");
 };
 
-var getGithubPathFromUrl = function(url, page_num, date, issue_status, per_page) {
+var getGithubPathFromUrl = function(url, page_num, issue_status, per_page) {
     
     //assign default values
     issue_status = typeof issue_status !== "undefined" ? issue_status : "all";
@@ -33,11 +30,7 @@ var getGithubPathFromUrl = function(url, page_num, date, issue_status, per_page)
         var path = match.slice(1);
         
         var toReturn = "/repos/" + path + "/issues?state=" + issue_status +
-            "&per_page=" + per_page + "&page=" + page_num;
-
-        if (date) {
-            toReturn += "&since=" + date.format();
-        } 
+            "&per_page=" + per_page + "&page=" + page_num; 
 
         return toReturn;
 
@@ -50,94 +43,18 @@ var getGithubPathFromUrl = function(url, page_num, date, issue_status, per_page)
 
 var getLastPageFromHeaders = function (headers) {
 
-    var sLastPage = (/\, <.*page=(.+).*>; rel="last"/).exec(headers["link"]);
-
-    if (!sLastPage) {
-        
-        return 1;
-    }
+    var sLastPage = (/\, <.*page=(.+).*>; rel="last"/).exec(headers["link"]).slice(1);
     
-    return parseInt(sLastPage.slice(1));
+    return parseInt(sLastPage);
 
 };
 
-var mergeNewIssues = function (newIssues, cacheIssues) {
-    
-    for (var i = 0; i < newIssues.length; i++) {
-        
-        var newIssue = newIssues[i];
-        var found = false;
-        
-        for (var k = 0; k < cacheIssues.length; k++) {
-            
-            if (newIssue.id == cacheIssues[k].id) {
-                //update existing cache entry
-                found = true;
-                cacheIssues[k] = newIssue   
-            }
-        }
-        
-        if (!found) {
-            //new cache entry
-            cacheIssues.push(newIssue);
-        }
-        
-    }
-    
-    //return cloned array
-    return cacheIssues.slice(0);
-}
 
-var getCacheContents = function () {
-
-
-    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1);
-
-    try {
-
-    var content = fs.readFileSync(".issue_cache/" + repo_name, "utf8");
-    
-    } catch (e) {
-        if (e.code === 'ENOENT') {
-            console.log('Issue cache not found');
-            return;
-        } else {
-            throw e;
-        }
-
-    }
-
-    var date = moment(content.split("\n")[0]);
-
-    var parse_content = JSON.parse(content.split("\n")[1]);
-
-    return {date: date, cached: parse_content};
-}
-
-var cacheIssues = function (issues, timestamp) {
-      
-    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1);
-    
-    mkdirp(".issue_cache", function (err) {
-        if (err) console.error(err);
-
-        fs.writeFile(".issue_cache/" + repo_name,
-            timestamp.format() + "\n" + JSON.stringify(issues),
-            function (err) {
-                if (err) console.error(err);
-                console.log("cached");
-            }
-        );
-    });
-
-}
-
-
-var issueRequest = function(callback, page_num, date) {
+var issueRequest = function(callback, page_num) {
 
     var options = {
         host: "api.github.com",
-        path: getGithubPathFromUrl(gUrl, page_num, date),
+        path: getGithubPathFromUrl(gUrl, page_num),
         headers: {
             "user-agent": "UnitTestBugAnalyzer",
             "Authorization": getBasicAuthenticationHeader(gUsername, gPassword)
@@ -179,7 +96,7 @@ var issueRequest = function(callback, page_num, date) {
                 callback("Error loading issues (HTTP status code " + response.statusCode + ").");
                 return;
             }
-
+            
             giLastPage = getLastPageFromHeaders(response.headers);
 
             //push data on to global gIssues array
@@ -199,24 +116,13 @@ var fetchIssues = function(callback) {
     //pages are 1-indexed
     var page = 1;
     
-    //variables for caching
-    var timestamp = moment(); //current date
-    var cache = getCacheContents(); 
-
-
     async.doWhilst(
         
         //repeating function call
         function (callback) {
         
             (function(page) {
-
-                if (cache) {
-                    issueRequest(callback, page, cache.date);
-                } else {
-                   issueRequest(callback, page);
-                }
-
+                issueRequest(callback, page);
             })(page);
             page++;
         },
@@ -248,15 +154,7 @@ var fetchIssues = function(callback) {
             var flatIssues = [];
             flatIssues = flatIssues.concat.apply(flatIssues, gIssues);
 
-            var allIssues = [];
-
-            if (cache) {
-                allIssues = mergeNewIssues(flatIssues, cache.cached);
-            }            
-
-            (function (issues)  { cacheIssues(issues, timestamp)} )(allIssues);
-
-            return callback(null, allIssues);
+            return callback(null, flatIssues);
         }
     );
 };
