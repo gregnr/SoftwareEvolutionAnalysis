@@ -130,6 +130,33 @@ var loadIssues = function(callback) {
 
 };
 
+var incrementDataSet = function (dataset, x) { 
+    
+    if (dataset[x] == undefined) {
+        dataset[x] = 1;
+    } else {
+        dataset[x]++;
+    }
+
+}
+
+var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
+    
+    for (var j = 0; j < gIssues.length; j++) {
+        var issue = gIssues[j];
+        var issue_opened = moment(issue.created_at);
+        
+        //disregard all pull requests
+        if (issue.pull_request !== undefined) continue;
+        
+        if (issue_opened < currentWeek.clone().add(1, "week")  && 
+            issue_opened > currentWeek) {
+            incrementDataSet(openIssues, weekCounter);
+        }
+    }
+
+}
+
 var printIssues = function(callback) {
 
 
@@ -148,31 +175,36 @@ var printIssues = function(callback) {
 
     });
     
-    var week  = gCommits[0].moment.clone();
+    var currentWeek  = gCommits[0].moment.clone();
     var finalWeek = gCommits[gCommits.length-1].moment.clone();
-    var openIssues = [];
-    var numWeeks = 0;
-    
-    while (week < finalWeek) {
-        for (var j = 0; j < gIssues.length; j++) {
-            var issue = gIssues[j];
-            var issue_opened = moment(issue.created_at);
-            if (issue.pull_request !== undefined) continue;
-            if (issue_opened < week.clone().add(1, "week")  && 
-                issue_opened > week) {
-                if (openIssues[numWeeks] == undefined) {
-                    openIssues[numWeeks] = 1;
-                } else {
-                    openIssues[numWeeks]++;
-                }
-            }
+
+    //data points
+    var openIssues = []; 
+    var linesOfCode = [];
+
+    var weekCounter = 0;
+    var commitCounter = 0; 
+   
+    while (currentWeek < finalWeek) {
+
+        //count issues for current week
+        countIssuesForWeek(currentWeek, weekCounter, openIssues);
+
+        //count line of code for current week
+        //call gregs function
+
+
+        //increment counters
+        currentWeek.add(1, "week");
+        weekCounter++;
+        while (gCommits[commitCounter] &&  gCommits[commitCounter].moment < currentWeek) {
+            commitCounter++;
         }
-        week.add(1, "week");
-        numWeeks++;
     }
 
+    console.log("weekCounter = " + weekCounter);
     // prints all data points
-    for (var k = 0; k < numWeeks; k++) {
+    for (var k = 0; k < weekCounter; k++) {
         if (openIssues[k] == undefined) {
             console.log(k + ",0");
         } else {
