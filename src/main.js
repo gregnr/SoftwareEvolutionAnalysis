@@ -7,10 +7,12 @@ var yargs = require("yargs")
     .alias("u", "username")
     .alias("p", "password")
     .alias("r", "repo")
+    .alias("t", "testdir")
     .alias("h", "help")
     .describe("u", "GitHub username")
     .describe("p", "GitHub password")
     .describe("r", "GitHub repository")
+    .describe("t", "Unit test directory")
     .describe("h", "Show the help menu");
 
 var issues = require("./issues");
@@ -30,6 +32,7 @@ var gCommits = [];
 var gUsername;
 var gPassword;
 var gUrl;
+var gTestDirectory;
 
 //Async functions
 var promptCredentials = function(callback) {
@@ -52,6 +55,12 @@ var promptCredentials = function(callback) {
         description: "GitHub Repository URL",
         pattern: /https?:\/\/github.com\/*/,
         message: "URL must be to a GitHub repository"
+    };
+
+    var testdirConfig = {
+        name: "testdir",
+        description: "Unit Test Directory",
+        message: "Directory containing unit tests to analyze"
     };
 
     var properties = [];
@@ -77,6 +86,13 @@ var promptCredentials = function(callback) {
         gUrl = argv.repo;
     } else {
         properties.push(repoConfig);
+    }
+
+    //Test directory
+    if (argv.testdir) {
+        gTestDirectory = argv.testdir;
+    } else {
+        properties.push(testdirConfig);
     }
 
     //If user entered all arguments, return
@@ -108,6 +124,10 @@ var promptCredentials = function(callback) {
             gUrl = result.url;
         }
 
+        if (result.testdir) {
+            gTestDirectory = result.testdir;
+        }
+
         callback();
     });
 };
@@ -130,8 +150,86 @@ var loadIssues = function(callback) {
 
 };
 
-var incrementDataSet = function (dataset, x) { 
+var getLineSum = function(commit, callback) {
+
+    var rootTree = commit.getTree().then(function(rootTree) {
+
+        return rootTree.entryByPath(gTestDirectory);
+        
+    }).then(function(entry) {
+        
+        if (entry.isTree()) {
+        
+            var repo = commit.owner();
+            var oid = entry.oid();
+            
+            return repo.getTree(oid);
+            
+        } else {
+            
+            //Entry was a file, not a directory;
+            callback({
+                moment: commit.moment,
+                lines: 0
+            });
+        }
+        
+        return null;
+        
+    }, function(error) {
+
+        callback({
+            moment: commit.moment,
+            lines: 0
+        });
+
+    }).then(function(tree) {
     
+        return tree.entries();
+        
+    }).then(function(entries) {
+        
+        var asyncFunctions = [];
+    
+        for (var i = 0; i < entries.length; i++) {
+            
+            var entry = entries[i];
+            
+            (function(entry) {
+            
+                asyncFunctions.push(function(callback) {
+                    
+                    entry.getBlob().then(function(blob) {
+                    
+                        var numberLines = blob.content().toString().split("\n").length - 1;
+
+                        callback(null, numberLines);
+                    });
+                });
+                
+            })(entry);
+        }
+        
+        async.series(asyncFunctions, function(err, fileLines) {
+            
+            var lineSum = 0;
+            
+            for (var i = 0; i < fileLines.length; i++) {
+                
+                lineSum += fileLines[i];
+            }
+
+            callback({
+                moment: commit.moment,
+                lines: lineSum
+            });
+        });
+    });
+};
+
+var incrementDataSet = function (dataset, x) { 
+   
+    console.log("incr @" + x); 
     if (dataset[x] == undefined) {
         dataset[x] = 1;
     } else {
@@ -141,14 +239,15 @@ var incrementDataSet = function (dataset, x) {
 }
 
 var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
-    
+   
+    console.log(gIssues.length); 
     for (var j = 0; j < gIssues.length; j++) {
+        
         var issue = gIssues[j];
         var issue_opened = moment(issue.created_at);
         
         //disregard all pull requests
-        if (issue.pull_request !== undefined) continue;
-        
+        //if (issue.pull_request !== undefined) continue;
         if (issue_opened < currentWeek.clone().add(1, "week")  && 
             issue_opened > currentWeek) {
             incrementDataSet(openIssues, weekCounter);
@@ -174,13 +273,15 @@ var printIssues = function(callback) {
         else return 0;
 
     });
-    
+
     var currentWeek  = gCommits[0].moment.clone();
     var finalWeek = gCommits[gCommits.length-1].moment.clone();
 
     //data points
     var openIssues = []; 
     var linesOfCode = [];
+
+    var lineSumReq = [];
 
     var weekCounter = 0;
     var commitCounter = 0; 
@@ -192,7 +293,16 @@ var printIssues = function(callback) {
 
         //count line of code for current week
         //call gregs function
+        (function (commit, weekCounter) { 
+            lineSumReq.push(function (callback) {
+                getLineSum(commit, function (obj) {
+                    linesOfCode[weekCounter] = obj.lines;
+                    callback();
+                });
 
+            });
+
+        })(gCommits[commitCounter], weekCounter);        
 
         //increment counters
         currentWeek.add(1, "week");
@@ -201,18 +311,33 @@ var printIssues = function(callback) {
             commitCounter++;
         }
     }
+    
+    async.parallel(lineSumReq, function () {
+        // prints all data points
+        for (var k = 0; k < weekCounter; k++) {
+           
+            var output = k + ",";
+ 
+            if (openIssues[k] == undefined) {
+                output += "0,";
+            } else {
+                output += openIssues[k] + ",";
+            }
 
-    console.log("weekCounter = " + weekCounter);
-    // prints all data points
-    for (var k = 0; k < weekCounter; k++) {
-        if (openIssues[k] == undefined) {
-            console.log(k + ",0");
-        } else {
-            console.log(k +"," + openIssues[k]);
+            if (linesOfCode[k] == undefined) {
+                output += "0";
+            } else {
+                output += linesOfCode[k];
+            }
+        
+            console.log(output);
+
         }
-    }
 
-    return callback();
+        callback();
+
+    });
+
 };
 
 
