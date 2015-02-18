@@ -16,7 +16,7 @@ var yargs = require("yargs")
     .describe("h", "Show the help menu");
 
 var issues = require("./issues");
-
+var graph = require("./graph");
 
 var argv = yargs.argv;
 
@@ -399,15 +399,23 @@ var printIssues = function(callback) {
         }
     
         // prints all data points
+
+	var time = [];
+	var numberIssues = [];
+	var deltaVolumeTests = [];
+	
         for (var k = 0; k < weekCounter; k++) {
            
-            var output = k + ",";
- 
+            var output = k + ",";    
+	    time.push(k);
+
             if (openIssues[k] == undefined) {
                 output += "0,";
+		numberIssues.push(0);
             } else {
                 output += openIssues[k] + ",";
-            }
+            	numberIssues.push(openIssues[k]);
+	    }
 
             if (linesOfCode[k] == undefined) {
                 output += "0,";
@@ -417,14 +425,35 @@ var printIssues = function(callback) {
             
             if (linesOfCodeDerivative[k] == undefined) {
                 output += "0";
+		deltaVolumeTests.push(0);
             } else {
                 output += linesOfCodeDerivative[k];
+		deltaVolumeTests.push(linesOfCodeDerivative[k]);
             }
         
             console.log(output);
         }
+	
+    	var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1);
+	
+	var o_numberIssues = {
+		x: time,
+		y: numberIssues,
+		type: "scatter",
+		yaxis: "y2"
+	};
 
-        callback();
+	var o_deltaVolumeTests = {
+		x: time,
+		y: deltaVolumeTests,
+		type: "scatter"
+	};
+
+	var data = [o_numberIssues, o_deltaVolumeTests];
+
+	console.log("call graph");
+
+	graph.graph_me(repo_name, data, callback);
 
     });
 };
