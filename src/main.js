@@ -229,7 +229,6 @@ var getLineSum = function(commit, callback) {
 
 var incrementDataSet = function (dataset, x) { 
    
-    console.log("incr @" + x); 
     if (dataset[x] == undefined) {
         dataset[x] = 1;
     } else {
@@ -240,7 +239,6 @@ var incrementDataSet = function (dataset, x) {
 
 var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
    
-    console.log(gIssues.length); 
     for (var j = 0; j < gIssues.length; j++) {
         
         var issue = gIssues[j];
