@@ -152,77 +152,150 @@ var loadIssues = function(callback) {
 
 var getLineSum = function(commit, callback) {
 
-    var rootTree = commit.getTree().then(function(rootTree) {
-
-        return rootTree.entryByPath(gTestDirectory);
+    //Get the directory tree for an entry
+    var getTreeByEntry = function(entry, callback) {
         
-    }).then(function(entry) {
-        
-        if (entry.isTree()) {
-        
-            var repo = commit.owner();
-            var oid = entry.oid();
-            
-            return repo.getTree(oid);
-            
-        } else {
-            
-            //Entry was a file, not a directory;
-            callback({
-                moment: commit.moment,
-                lines: 0
-            });
-        }
-        
-        return null;
-        
-    }, function(error) {
-
-        callback({
-            moment: commit.moment,
-            lines: 0
-        });
-
-    }).then(function(tree) {
+        //Entry is a directory
     
-        return tree.entries();
+        var repo = commit.owner();
+        var oid = entry.oid();
         
-    }).then(function(entries) {
+        repo.getTree(oid).then(function(tree) {
+        
+            callback(null, tree);
+            
+        }, function(error) {
+            
+            callback(error);
+        });
+    };
+    
+    //Count the lines in a single file
+    var countLinesInFile = function(entry, callback) {
+        
+        entry.getBlob().then(function(blob) {
+        
+            var numberLines = blob.content().toString().split("\n").length - 1;
+
+            callback(null, numberLines);
+            
+        }, function(error) {
+            
+            callback(error);
+        });
+    };
+
+    //Recursively sum up the lines within a directory
+    var countLinesInDirectory = function(tree, callback) {
+    
+        //Get entries (files/directories) within directory tree
+        var entries = tree.entries();
         
         var asyncFunctions = [];
     
         for (var i = 0; i < entries.length; i++) {
             
             var entry = entries[i];
-            
+        
+            //Wrap in a self-invoking function to preserve scope
             (function(entry) {
             
                 asyncFunctions.push(function(callback) {
+        
+                    if (entry.isTree()) {
                     
-                    entry.getBlob().then(function(blob) {
+                        //Entry is a directory. Recursively call countLinesInDirectory()
+                        
+                        getTreeByEntry(entry, function(error, tree) {
+                        
+                            countLinesInDirectory(tree, callback);
+                        });
                     
-                        var numberLines = blob.content().toString().split("\n").length - 1;
-
-                        callback(null, numberLines);
-                    });
+                    } else {
+            
+                        //Entry is a file
+                        
+                        countLinesInFile(entry, callback);
+                    }
                 });
                 
             })(entry);
         }
         
-        async.series(asyncFunctions, function(err, fileLines) {
-            
-            var lineSum = 0;
-            
-            for (var i = 0; i < fileLines.length; i++) {
+        async.series(asyncFunctions, function(error, fileLines) {
+        
+            if (error) {
                 
-                lineSum += fileLines[i];
+                callback(error);
+                return;
             }
+            
+            if (fileLines) {
+            
+                var lineSum = 0;
+                
+                for (var i = 0; i < fileLines.length; i++) {
+                    
+                    lineSum += fileLines[i];
+                }
 
+                callback(null, lineSum);
+                
+            } else {
+                
+                //No lines returned - directory tree is empty
+                callback(null, 0);
+            }
+        });
+    };
+
+    //Get repo root tree
+    var rootTree = commit.getTree().then(function(rootTree) {
+
+        //Get the tree entry for the test directory specified
+        return rootTree.entryByPath(gTestDirectory);
+        
+    }).then(function(entry) {
+    
+        //Test directory specified exists
+        
+        if (entry.isTree()) {
+            
+            //Test directory specified is indeed a directory
+        
+            getTreeByEntry(entry, function(error, tree) {
+        
+                countLinesInDirectory(tree, function(error, lines) {
+                
+                    if (error) {
+                        console.error(error);
+                    }
+                
+                    callback({
+                        moment: commit.moment,
+                        lines: lines
+                    });
+                });
+            });
+            
+        } else {
+            
+            //Test directory specified is really a file
+            //Right now returning 0 lines - need to come up with a better way to handle this case (ie. return error)
+        
             callback({
                 moment: commit.moment,
-                lines: lineSum
+                lines: 0
             });
+        }
+        
+    }, function(error) {
+
+        //Test directory specified doesn't exist in this commit. This is common if the repo didn't have tests in early commits
+        
+        callback({
+            moment: commit.moment,
+            lines: 0
         });
     });
 };
