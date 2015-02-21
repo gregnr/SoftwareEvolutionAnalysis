@@ -150,12 +150,112 @@ var loadIssues = function(callback) {
 
 };
 
+var getLineSum = function(commit, callback) {
+
+    var rootTree = commit.getTree().then(function(rootTree) {
+
+        return rootTree.entryByPath(gTestDirectory);
+        
+    }).then(function(entry) {
+        
+        if (entry.isTree()) {
+        
+            var repo = commit.owner();
+            var oid = entry.oid();
+            
+            return repo.getTree(oid);
+            
+        } else {
+            
+            //Entry was a file, not a directory;
+            callback({
+                moment: commit.moment,
+                lines: 0
+            });
+        }
+        
+        return null;
+        
+    }, function(error) {
+
+        callback({
+            moment: commit.moment,
+            lines: 0
+        });
+
+    }).then(function(tree) {
+    
+        return tree.entries();
+        
+    }).then(function(entries) {
+        
+        var asyncFunctions = [];
+    
+        for (var i = 0; i < entries.length; i++) {
+            
+            var entry = entries[i];
+            
+            (function(entry) {
+            
+                asyncFunctions.push(function(callback) {
+                    
+                    entry.getBlob().then(function(blob) {
+                    
+                        var numberLines = blob.content().toString().split("\n").length - 1;
+
+                        callback(null, numberLines);
+                    });
+                });
+                
+            })(entry);
+        }
+        
+        async.series(asyncFunctions, function(err, fileLines) {
+            
+            var lineSum = 0;
+            
+            for (var i = 0; i < fileLines.length; i++) {
+                
+                lineSum += fileLines[i];
+            }
+
+            callback({
+                moment: commit.moment,
+                lines: lineSum
+            });
+        });
+    });
+};
+
+var incrementDataSet = function (dataset, x) { 
+   
+    if (dataset[x] == undefined) {
+        dataset[x] = 1;
+    } else {
+        dataset[x]++;
+    }
+
+}
+
+var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
+   
+    for (var j = 0; j < gIssues.length; j++) {
+        
+        var issue = gIssues[j];
+        var issue_opened = moment(issue.created_at);
+        
+        //disregard all pull requests
+        //if (issue.pull_request !== undefined) continue;
+        if (issue_opened < currentWeek.clone().add(1, "week")  && 
+            issue_opened > currentWeek) {
+            incrementDataSet(openIssues, weekCounter);
+        }
+    }
+
+}
+
 var printIssues = function(callback) {
 
-    for (var j = 0; j < gIssues.length; j++) {
-        var issue = gIssues[j];
-        //console.log(issue.number + ": " + issue.title);
-    }
 
     for (var i = 0; i < gCommits.length; i++) {
         
@@ -172,105 +272,70 @@ var printIssues = function(callback) {
 
     });
 
-    var asyncFunctions = [];
-    
-    for (var k = 0; k < gCommits.length; k++) {
-        
-        var commit = gCommits[k];
-        
-        (function(commit) {
+    var currentWeek  = gCommits[0].moment.clone();
+    var finalWeek = gCommits[gCommits.length-1].moment.clone();
 
-            asyncFunctions.push(function(callback) {
+    //data points
+    var openIssues = []; 
+    var linesOfCode = [];
 
-                var rootTree = commit.getTree().then(function(rootTree) {
+    var lineSumReq = [];
 
-                    return rootTree.entryByPath(gTestDirectory);
-                    
-                }).then(function(entry) {
-                    
-                    if (entry.isTree()) {
-                    
-                        var repo = commit.owner();
-                        var oid = entry.oid();
-                        
-                        return repo.getTree(oid);
-                        
-                    } else {
-                        
-                        //Entry was a file, not a directory;
-                        callback(null, {
-                            moment: commit.moment,
-                            lines: 0
-                        });
-                    }
-                    
-                    return null;
-                    
-                }, function(error) {
+    var weekCounter = 0;
+    var commitCounter = 0; 
+   
+    while (currentWeek < finalWeek) {
 
-                    callback(null, {
-                        moment: commit.moment,
-                        lines: 0
-                    });
+        //count issues for current week
+        countIssuesForWeek(currentWeek, weekCounter, openIssues);
 
-                }).then(function(tree) {
-                
-                    return tree.entries();
-                    
-                }).then(function(entries) {
-                    
-                    var asyncFunctions = [];
-                
-                    for (var i = 0; i < entries.length; i++) {
-                        
-                        var entry = entries[i];
-                        
-                        (function(entry) {
-                        
-                            asyncFunctions.push(function(callback) {
-                                
-                                entry.getBlob().then(function(blob) {
-                                
-                                    var numberLines = blob.content().toString().split("\n").length - 1;
-
-                                    callback(null, numberLines);
-                                });
-                            });
-                            
-                        })(entry);
-                    }
-                    
-                    async.series(asyncFunctions, function(err, fileLines) {
-                        
-                        var lineSum = 0;
-                        
-                        for (var i = 0; i < fileLines.length; i++) {
-                            
-                            lineSum += fileLines[i];
-                        }
-
-                        callback(null, {
-                            moment: commit.moment,
-                            lines: lineSum
-                        });
-                    });
+        //count line of code for current week
+        //call gregs function
+        (function (commit, weekCounter) { 
+            lineSumReq.push(function (callback) {
+                getLineSum(commit, function (obj) {
+                    linesOfCode[weekCounter] = obj.lines;
+                    callback();
                 });
+
             });
 
-        })(commit);
+        })(gCommits[commitCounter], weekCounter);        
+
+        //increment counters
+        currentWeek.add(1, "week");
+        weekCounter++;
+        while (gCommits[commitCounter] &&  gCommits[commitCounter].moment < currentWeek) {
+            commitCounter++;
+        }
     }
+    
+    async.parallel(lineSumReq, function () {
+        // prints all data points
+        for (var k = 0; k < weekCounter; k++) {
+           
+            var output = k + ",";
+ 
+            if (openIssues[k] == undefined) {
+                output += "0,";
+            } else {
+                output += openIssues[k] + ",";
+            }
 
-    async.series(asyncFunctions, function(err, lineCountEntries) {
+            if (linesOfCode[k] == undefined) {
+                output += "0";
+            } else {
+                output += linesOfCode[k];
+            }
+        
+            console.log(output);
 
-        for (var i = 0; i < lineCountEntries.length; i++) {
-
-            var lineCountEntry = lineCountEntries[i];
-
-            console.log(lineCountEntry.moment.format("YYYY MM DD HH:mm:ss") + ":", lineCountEntry.lines + " lines");
         }
 
         callback();
+
     });
+
 };
 
 

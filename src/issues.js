@@ -100,7 +100,7 @@ var getCacheContents = function () {
     } catch (e) {
         if (e.code === 'ENOENT') {
             console.log('Issue cache not found');
-            return;
+            return {cached: []};
         } else {
             throw e;
         }
@@ -211,7 +211,7 @@ var fetchIssues = function(callback) {
         
             (function(page) {
 
-                if (cache) {
+                if (cache.date) {
                     issueRequest(callback, page, cache.date);
                 } else {
                    issueRequest(callback, page);
@@ -224,7 +224,7 @@ var fetchIssues = function(callback) {
         // async.doWhilst stops itteration when this function returns false
         function() { 
             //Note that giLastPage is dynamically updated based on request results
-            return page < giLastPage;
+            return page <= giLastPage;
         },
 
         //called after itteration stops
