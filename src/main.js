@@ -440,13 +440,15 @@ var printIssues = function(callback) {
 		x: time,
 		y: numberIssues,
 		type: "scatter",
-		yaxis: "y2"
+		yaxis: "y2",
+		name: "Number of Open Issues"
 	};
 
 	var o_deltaVolumeTests = {
 		x: time,
 		y: deltaVolumeTests,
-		type: "scatter"
+		type: "scatter",
+		name: "Change in Test Volume"
 	};
 
 	var data = [o_numberIssues, o_deltaVolumeTests];
