@@ -3,7 +3,6 @@ plotly = plotly("seng371", "k66ptaq4eh");
 
 module.exports.graph_me  = function (repo, data, callback) {
 	
-	console.log("In graph.js");
 	var layout = {autosize: false,
 			width: 500,
 			length: 500,
@@ -17,11 +16,9 @@ module.exports.graph_me  = function (repo, data, callback) {
 	var graphOptions = {layout: layout, 
 				filename: repo + " " + new Date(), 
 				fileopt: "overwrite"};
-	console.log("about to graph");
 	
 	plotly.plot(data, graphOptions, function(err, msg){
 		console.log("graph complete!");
-		console.log(msg);
 		callback();	
 	});
 

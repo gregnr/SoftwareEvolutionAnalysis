@@ -451,8 +451,6 @@ var printIssues = function(callback) {
 
 	var data = [o_numberIssues, o_deltaVolumeTests];
 
-	console.log("call graph");
-
 	graph.graph_me(repo_name, data, callback);
 
     });
