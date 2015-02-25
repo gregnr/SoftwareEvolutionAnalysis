@@ -351,6 +351,7 @@ var printIssues = function(callback) {
     //data points
     var openIssues = []; 
     var linesOfCode = [];
+    var linesOfCodeDerivative = [];
 
     var lineSumReq = [];
 
@@ -384,6 +385,19 @@ var printIssues = function(callback) {
     }
     
     async.parallel(lineSumReq, function () {
+    
+        //Get change in LOC
+        
+        var prevLineCount = 0;
+        for (var i = 0; i < linesOfCode.length; i++) {
+        
+            lineCount = linesOfCode[i];
+            
+            linesOfCodeDerivative.push(lineCount - prevLineCount);
+            
+            prevLineCount = lineCount;
+        }
+    
         // prints all data points
         for (var k = 0; k < weekCounter; k++) {
            
@@ -396,19 +410,23 @@ var printIssues = function(callback) {
             }
 
             if (linesOfCode[k] == undefined) {
+                output += "0,";
+            } else {
+                output += linesOfCode[k] + ",";
+            }
+            
+            if (linesOfCodeDerivative[k] == undefined) {
                 output += "0";
             } else {
-                output += linesOfCode[k];
+                output += linesOfCodeDerivative[k];
             }
         
             console.log(output);
-
         }
 
         callback();
 
     });
-
 };
 
 
