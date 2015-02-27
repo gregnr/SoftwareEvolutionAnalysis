@@ -155,7 +155,7 @@ var loadIssues = function(callback) {
 
 var analyseRepo = function (callback) {
 
-    console.log("analyse");
+    console.log("Beginning analysis");
     analyser.analyse(gTestDirectory, gIssues, gCommits, gUrl,  callback);
 
 }
