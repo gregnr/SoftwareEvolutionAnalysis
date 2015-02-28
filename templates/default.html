@@ -1,0 +1,49 @@
+<html>
+
+    <head>
+        <title>Unit Test ROI Analyser Results: {{repo}} {{date}}</title>
+
+        <style>
+            html {
+                font-family: Arial, Helvetica, sans serif;
+            }
+
+            div.header {
+                width: 90%;
+                text-align: center;
+            }
+
+            div.plotly {
+                width: 1200px;
+            }
+
+            div.main {
+                border-top: 1px solid #aaaaaa;
+            }
+
+            .center {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+
+        </style>
+
+    </head>
+
+    <body>
+        <div class="header center">
+            <h1>Unit Test ROI Analyser Results</h1>
+            <p>Repository Analysed: {{repo}}</p>
+            <p>Date: {{date}}</p>
+        </div>
+        <div class="main">
+            <div class="plotly center">
+                <iframe width="1200" height="700" frameborder="0" seamless="seamless" scrolling="no" src="https://plot.ly/~seng371/{{plotlyid}}.embed"></iframe>
+            </div>
+        </div>
+    </body>
+
+
+</html>
+
