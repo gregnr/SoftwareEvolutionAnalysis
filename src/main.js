@@ -8,14 +8,18 @@ var yargs = require("yargs")
     .alias("p", "password")
     .alias("r", "repo")
     .alias("t", "testdir")
+    .alias("z", "pullrequest")
+    .alias("l", "filterissues")
     .alias("h", "help")
     .describe("u", "GitHub username")
     .describe("p", "GitHub password")
     .describe("r", "GitHub repository")
     .describe("t", "Unit test directory")
+    .describe("z", "Include pull requests (y/n)")
+    .describe("l", "Filter issues by given label(s)")
     .describe("h", "Show the help menu");
 
-var analyser = require("./analyser")
+var analyser = require("./analyser");
 var issues = require("./issues");
 var sync = require("./sync");
 
@@ -34,6 +38,8 @@ var gUsername;
 var gPassword;
 var gUrl;
 var gTestDirectory;
+var pullRequestFlag;
+var filterIssueLabels;
 
 //Async functions
 var promptCredentials = function(callback) {
@@ -62,6 +68,18 @@ var promptCredentials = function(callback) {
         name: "testdir",
         description: "Unit Test Directory",
         message: "Directory containing unit tests to analyze"
+    };
+    var pullrequestConfig = {
+	name: "pullrequest",
+	description: "Include pull requests (y/n)",
+	pattern: /y|n/,
+	message: "Include pull requests in analysis 'y'-yes or 'n'-no" 
+    };
+    var filterissuesConfig = {
+	name: "filterissues",
+	description: "Filter issues by given label(s)",
+	pattern: /^[a-zA-Z\,]/,
+	message: "specify labels separated by comma's ex. ('bug,enhancement,UI')"
     };
 
     var properties = [];
@@ -94,6 +112,20 @@ var promptCredentials = function(callback) {
         gTestDirectory = argv.testdir;
     } else {
         properties.push(testdirConfig);
+    }
+    
+    //Pull requests flag
+    if (argv.pullrequest) {
+	pullRequestFlag = argv.pullrequest;
+    } else {
+	properties.push(pullrequestConfig);
+    }
+
+    //Filter by label(s) 
+    if (argv.filterissues) {
+	filterIssueLabels = argv.filterissues;
+    } else {
+	properties.push(filterissuesConfig);
     }
 
     //If user entered all arguments, return
@@ -128,11 +160,16 @@ var promptCredentials = function(callback) {
         if (result.testdir) {
             gTestDirectory = result.testdir;
         }
-
-        callback();
+	
+	if (result.pullrequest) {
+	    pullRequestFlag = result.pullrequest;
+        }
+	if (result.filterissues) {
+	    filterIssueLabels = result.filterissues
+	}	   
+	callback();
     });
 };
-
 
 var loadIssues = function(callback) {
     
@@ -168,9 +205,20 @@ var loadCommits = function (callback) {
 }
 
 //main flow
+
 async.series([promptCredentials, loadIssues, loadCommits, analyseRepo], function(err) {
     
     if (err) {
         console.error(err);
     }
 });
+
+//Testing command line additions
+/*
+async.series([promptCredentials], function(err) {
+    
+    if (err) {
+        console.error(err);
+    }
+});
+*/
