@@ -2,8 +2,6 @@ var async = require("async");
 var nodegit = require("nodegit")
 var moment = require("moment");
 
-var graph = require("./graph");
-
 
 //Initialize globals
 var gIssues = [];
@@ -261,22 +259,22 @@ var processData = function(callback) {
     
         // prints all data points
 
-	var time = [];
-	var numberIssues = [];
-	var deltaVolumeTests = [];
+        var time = [];
+        var numberIssues = [];
+        var deltaVolumeTests = [];
 	
         for (var k = 0; k < weekCounter; k++) {
            
             var output = k + ",";    
-	    time.push(k);
+	        time.push(k);
 
             if (openIssues[k] == undefined) {
                 output += "0,";
-		numberIssues.push(0);
+                numberIssues.push(0);
             } else {
                 output += openIssues[k] + ",";
             	numberIssues.push(openIssues[k]);
-	    }
+            }
 
             if (linesOfCode[k] == undefined) {
                 output += "0,";
@@ -294,39 +292,22 @@ var processData = function(callback) {
         
             console.log(output);
         }
-	
-
-    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1);
-	
-	var o_numberIssues = {
-		x: time,
-		y: numberIssues,
-		type: "scatter",
-		yaxis: "y2",
-		name: "Number of Open Issues"
-	};
-
-	var o_deltaVolumeTests = {
-		x: time,
-		y: deltaVolumeTests,
-		type: "scatter",
-		name: "Change in Test Volume"
-	};
-
-	var data = [o_numberIssues, o_deltaVolumeTests];
-
-	graph.graph_me(repo_name, data, callback);
-
+        
+        callback({
+            time: time,
+            numberIssues: numberIssues,
+            deltaVolumeTests: deltaVolumeTests
+        });
     });
 };
 
 module.exports.analyse = function (test, issues, commits, url, callback) {
+
     gCommits = commits;
     gUrl = url;
     gIssues = issues;
     gTestDirectory = test; 
 
     processData(callback);
-
 }
 
