@@ -186,7 +186,7 @@ var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
         var counted = false;
  
         //Check gPullRequestFlag if 'y' skip issue
-        if(gPullRequestFlag == 'y'){
+        if(gPullRequestFlag == 'n'){
             if (issue.pull_request !== undefined){ 
                 continue;
             }
@@ -205,18 +205,26 @@ var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
             }
         }
         //Check gKeywords
-        if(gKeywords && issue.title !== undefined){
+        if(gKeywords && issue.title !== undefined && !counted){
             issueTitle = issue.title;
             if (issue.body !== undefined){
                 issueBody = issue.body;
-            }
-            for (x in gKeywords) {
-                if(issueTitle.indexOf(gKeywords[x]) > -1 || issueBody.indexOf(gKeywords[x]) > -1){
-                    if(!counted){
+                for(x in gKeywords && !counted){
+                    if(issueBody.indexOf(gKeywords[x]) > -1){    
                         if (issue_opened < currentWeek.clone().add(1, "week")  && 
                                 issue_opened > currentWeek) {
                             incrementDataSet(openIssues, weekCounter);
+                            counted = true;
                         }
+                    }
+                }
+            }
+            for (x in gKeywords) {
+                if(issueTitle.indexOf(gKeywords[x]) > -1 && !counted){
+                    if (issue_opened < currentWeek.clone().add(1, "week")  && 
+                            issue_opened > currentWeek) {
+                        incrementDataSet(openIssues, weekCounter);
+                        counted = true;
                     }
                 }
             }

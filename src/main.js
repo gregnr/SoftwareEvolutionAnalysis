@@ -83,14 +83,14 @@ var promptCredentials = function(callback) {
     var filterissuesConfig = {
         name: "filterissues",
         description: "Filter issues by given label(s)",
-        pattern: /^([a-zA-Z]+)(,\s*[a-zA-Z]+)*$/,
+        pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
         message: "specify labels separated by comma's ex. ('bug, enhancement, UI')"
     };
 
     var keywordsConfig = {
         name: "keywords",
         description: "Filter issues by keyword(s) search",
-        pattern: /^([a-zA-Z]+)(,\s*[a-zA-Z]+)*$/,
+        pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
         message: "specify keywords separated by comma's ex. ('UI, view, heatmap')"
     };
     var properties = [];
