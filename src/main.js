@@ -38,8 +38,8 @@ var gUsername;
 var gPassword;
 var gUrl;
 var gTestDirectory;
-var pullRequestFlag;
-var filterIssueLabels;
+var gPullRequestFlag;
+var gFilterIssueLabels;
 
 //Async functions
 var promptCredentials = function(callback) {
@@ -72,14 +72,14 @@ var promptCredentials = function(callback) {
     var pullrequestConfig = {
 	name: "pullrequest",
 	description: "Include pull requests (y/n)",
-	pattern: /y|n/,
+	pattern: /^(y|n){1}$/,
 	message: "Include pull requests in analysis 'y'-yes or 'n'-no" 
     };
     var filterissuesConfig = {
 	name: "filterissues",
 	description: "Filter issues by given label(s)",
-	pattern: /^[a-zA-Z\,]/,
-	message: "specify labels separated by comma's ex. ('bug,enhancement,UI')"
+	pattern: /^([a-z]+)(,\s*[a-z]+)*$/,
+	message: "specify labels separated by comma's ex. ('bug, enhancement, UI')"
     };
 
     var properties = [];
@@ -116,14 +116,15 @@ var promptCredentials = function(callback) {
     
     //Pull requests flag
     if (argv.pullrequest) {
-	pullRequestFlag = argv.pullrequest;
+	gPullRequestFlag = argv.pullrequest;
     } else {
 	properties.push(pullrequestConfig);
     }
 
     //Filter by label(s) 
     if (argv.filterissues) {
-	filterIssueLabels = argv.filterissues;
+	gFilterIssueLabels = argv.filterissues;
+	gFilterIssueLabels = gFilterIssueLabels.split(", ");
     } else {
 	properties.push(filterissuesConfig);
     }
@@ -162,10 +163,11 @@ var promptCredentials = function(callback) {
         }
 	
 	if (result.pullrequest) {
-	    pullRequestFlag = result.pullrequest;
+	    gPullRequestFlag = result.pullrequest;
         }
 	if (result.filterissues) {
-	    filterIssueLabels = result.filterissues
+	    gFilterIssueLabels = result.filterissues;
+	    gFilterIssueLabels = gFilterIssueLabels.split(", ");
 	}	   
 	callback();
     });
@@ -193,7 +195,7 @@ var loadIssues = function(callback) {
 var analyseRepo = function (callback) {
 
     console.log("Beginning analysis");
-    analyser.analyse(gTestDirectory, gIssues, gCommits, gUrl,  callback);
+    analyser.analyse(gTestDirectory, gIssues, gCommits, gUrl, gPullRequestFlag, gFilterIssueLabels, callback);
 
 }
 
@@ -205,20 +207,9 @@ var loadCommits = function (callback) {
 }
 
 //main flow
-
 async.series([promptCredentials, loadIssues, loadCommits, analyseRepo], function(err) {
     
     if (err) {
         console.error(err);
     }
 });
-
-//Testing command line additions
-/*
-async.series([promptCredentials], function(err) {
-    
-    if (err) {
-        console.error(err);
-    }
-});
-*/

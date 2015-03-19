@@ -10,6 +10,8 @@ var gIssues = [];
 var gCommits = [];
 var gUrl;
 var gTestDirectory;
+var gPullRequestFlag;
+var gFilterIssueLabels
 
 var getLineSum = function(commit, callback) {
 
@@ -172,20 +174,38 @@ var incrementDataSet = function (dataset, x) {
 }
 
 var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
-   
+    var issueLabels;
+
     for (var j = 0; j < gIssues.length; j++) {
-        
+    
         var issue = gIssues[j];
         var issue_opened = moment(issue.created_at);
         
-        //disregard all pull requests
-        //if (issue.pull_request !== undefined) continue;
-        if (issue_opened < currentWeek.clone().add(1, "week")  && 
-            issue_opened > currentWeek) {
-            incrementDataSet(openIssues, weekCounter);
+        //Check gPullRequestFlag if 'y' skip issue
+        if(gPullRequestFlag == 'y'){
+            if (issue.pull_request !== undefined){ 
+                continue;
+            }
         }
+        //Check gFilterIssueLabels
+        if(gFilterIssueLabels && issue.labels !== undefined){
+            issueLabels = issue.labels;
+            for (x in issueLabels) {
+                if(gFilterIssueLabels.indexOf(issueLabels[x].name) > -1){
+                    if (issue_opened < currentWeek.clone().add(1, "week")  && 
+                            issue_opened > currentWeek) {
+                        incrementDataSet(openIssues, weekCounter);
+                    }
+                }
+            }
+        continue;
+        }
+        //Otherwise, count all issues
+        if (issue_opened < currentWeek.clone().add(1, "week")  && 
+                issue_opened > currentWeek) {
+            incrementDataSet(openIssues, weekCounter);
+        }     
     }
-
 }
 
 var processData = function(callback) {
@@ -195,7 +215,6 @@ var processData = function(callback) {
         
         var format = "MMM DD YYYY HH:mm:ss";
         gCommits[i].moment = moment((/.{4}(.{20}).*/).exec(gCommits[i].date()).slice(1), format);
-
     }
 
     gCommits.sort(function (a,b) {
@@ -320,13 +339,13 @@ var processData = function(callback) {
     });
 };
 
-module.exports.analyse = function (test, issues, commits, url, callback) {
+module.exports.analyse = function (test, issues, commits, url, prFlag, labels, callback) {
     gCommits = commits;
     gUrl = url;
     gIssues = issues;
-    gTestDirectory = test; 
+    gTestDirectory = test;
+    gPullRequestFlag = prFlag;
+    gFilterIssueLabels = labels; 
 
     processData(callback);
-
 }
-
