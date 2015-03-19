@@ -11,13 +11,15 @@ var yargs = require("yargs")
     .alias("z", "pullrequest")
     .alias("l", "filterissues")
     .alias("h", "help")
+    .alias("k", "keywords")
     .describe("u", "GitHub username")
     .describe("p", "GitHub password")
     .describe("r", "GitHub repository")
     .describe("t", "Unit test directory")
     .describe("z", "Include pull requests (y/n)")
     .describe("l", "Filter issues by given label(s)")
-    .describe("h", "Show the help menu");
+    .describe("h", "Show the help menu")
+    .describe("k", "Filter issues by keyword(s) search");
 
 var analyser = require("./analyser");
 var issues = require("./issues");
@@ -40,6 +42,7 @@ var gUrl;
 var gTestDirectory;
 var gPullRequestFlag;
 var gFilterIssueLabels;
+var gKeywords;
 
 //Async functions
 var promptCredentials = function(callback) {
@@ -69,19 +72,27 @@ var promptCredentials = function(callback) {
         description: "Unit Test Directory",
         message: "Directory containing unit tests to analyze"
     };
+
     var pullrequestConfig = {
-	name: "pullrequest",
-	description: "Include pull requests (y/n)",
-	pattern: /^(y|n){1}$/,
-	message: "Include pull requests in analysis 'y'-yes or 'n'-no" 
-    };
-    var filterissuesConfig = {
-	name: "filterissues",
-	description: "Filter issues by given label(s)",
-	pattern: /^([a-z]+)(,\s*[a-z]+)*$/,
-	message: "specify labels separated by comma's ex. ('bug, enhancement, UI')"
+        name: "pullrequest",
+        description: "Include pull requests (y/n)",
+        pattern: /^(y|n){1}$/,
+        message: "Include pull requests in analysis 'y'-yes or 'n'-no" 
     };
 
+    var filterissuesConfig = {
+        name: "filterissues",
+        description: "Filter issues by given label(s)",
+        pattern: /^([a-zA-Z]+)(,\s*[a-zA-Z]+)*$/,
+        message: "specify labels separated by comma's ex. ('bug, enhancement, UI')"
+    };
+
+    var keywordsConfig = {
+        name: "keywords",
+        description: "Filter issues by keyword(s) search",
+        pattern: /^([a-zA-Z]+)(,\s*[a-zA-Z]+)*$/,
+        message: "specify keywords separated by comma's ex. ('UI, view, heatmap')"
+    };
     var properties = [];
 
     //Prompt user for arguments they didn't specify:
@@ -116,19 +127,26 @@ var promptCredentials = function(callback) {
     
     //Pull requests flag
     if (argv.pullrequest) {
-	gPullRequestFlag = argv.pullrequest;
+        gPullRequestFlag = argv.pullrequest;
     } else {
-	properties.push(pullrequestConfig);
+        properties.push(pullrequestConfig);
     }
 
     //Filter by label(s) 
     if (argv.filterissues) {
-	gFilterIssueLabels = argv.filterissues;
-	gFilterIssueLabels = gFilterIssueLabels.split(", ");
+        gFilterIssueLabels = argv.filterissues;
+        gFilterIssueLabels = gFilterIssueLabels.split(", ");
     } else {
-	properties.push(filterissuesConfig);
+        properties.push(filterissuesConfig);
     }
 
+    //Filter by keyword search 
+    if (argv.keywords) {
+        gKeywords = argv.keywords;
+        gKeywords = gKeywords.split(", ");
+    } else {
+        properties.push(keywordsConfig);
+    }
     //If user entered all arguments, return
     if (properties.length === 0) {
         callback();
@@ -162,13 +180,19 @@ var promptCredentials = function(callback) {
             gTestDirectory = result.testdir;
         }
 	
-	if (result.pullrequest) {
-	    gPullRequestFlag = result.pullrequest;
+    	if (result.pullrequest) {
+            gPullRequestFlag = result.pullrequest;
         }
-	if (result.filterissues) {
-	    gFilterIssueLabels = result.filterissues;
-	    gFilterIssueLabels = gFilterIssueLabels.split(", ");
-	}	   
+
+	    if (result.filterissues) {
+            gFilterIssueLabels = result.filterissues;
+            gFilterIssueLabels = gFilterIssueLabels.split(", ");
+    	}	  
+ 
+	    if (result.keywords) {
+            gKeywords = result.keywords;
+            gKeywords = gKeywords.split(", ");
+	    }	   
 	callback();
     });
 };
@@ -195,7 +219,7 @@ var loadIssues = function(callback) {
 var analyseRepo = function (callback) {
 
     console.log("Beginning analysis");
-    analyser.analyse(gTestDirectory, gIssues, gCommits, gUrl, gPullRequestFlag, gFilterIssueLabels, callback);
+    analyser.analyse(gTestDirectory, gIssues, gCommits, gUrl, gPullRequestFlag, gFilterIssueLabels, gKeywords, callback);
 
 }
 

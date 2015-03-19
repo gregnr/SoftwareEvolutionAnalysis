@@ -11,7 +11,8 @@ var gCommits = [];
 var gUrl;
 var gTestDirectory;
 var gPullRequestFlag;
-var gFilterIssueLabels
+var gFilterIssueLabels;
+var gKeywords;
 
 var getLineSum = function(commit, callback) {
 
@@ -175,12 +176,15 @@ var incrementDataSet = function (dataset, x) {
 
 var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
     var issueLabels;
+    var issueTitle;
+    var issueBody;
 
     for (var j = 0; j < gIssues.length; j++) {
     
         var issue = gIssues[j];
         var issue_opened = moment(issue.created_at);
-        
+        var counted = false;
+ 
         //Check gPullRequestFlag if 'y' skip issue
         if(gPullRequestFlag == 'y'){
             if (issue.pull_request !== undefined){ 
@@ -195,9 +199,30 @@ var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
                     if (issue_opened < currentWeek.clone().add(1, "week")  && 
                             issue_opened > currentWeek) {
                         incrementDataSet(openIssues, weekCounter);
+                        counted = true;
                     }
                 }
             }
+        }
+        //Check gKeywords
+        if(gKeywords && issue.title !== undefined){
+            issueTitle = issue.title;
+            if (issue.body !== undefined){
+                issueBody = issue.body;
+            }
+            for (x in gKeywords) {
+                if(issueTitle.indexOf(gKeywords[x]) > -1 || issueBody.indexOf(gKeywords[x]) > -1){
+                    if(!counted){
+                        if (issue_opened < currentWeek.clone().add(1, "week")  && 
+                                issue_opened > currentWeek) {
+                            incrementDataSet(openIssues, weekCounter);
+                        }
+                    }
+                }
+            }
+        }
+        //If keywords or labels specified continue here and do not count this issue
+        if (gKeywords || gFilterIssueLabels){
         continue;
         }
         //Otherwise, count all issues
@@ -339,13 +364,14 @@ var processData = function(callback) {
     });
 };
 
-module.exports.analyse = function (test, issues, commits, url, prFlag, labels, callback) {
+module.exports.analyse = function (test, issues, commits, url, prFlag, labels, keywords, callback) {
     gCommits = commits;
     gUrl = url;
     gIssues = issues;
     gTestDirectory = test;
     gPullRequestFlag = prFlag;
     gFilterIssueLabels = labels; 
+    gKeywords = keywords;
 
     processData(callback);
 }
