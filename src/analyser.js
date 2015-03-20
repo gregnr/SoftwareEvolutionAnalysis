@@ -56,29 +56,33 @@ var getLineSum = function(commit, callback) {
             
             var entry = entries[i];
         
-            //Wrap in a self-invoking function to preserve scope
-            (function(entry) {
-            
-                asyncFunctions.push(function(callback) {
+            //Only include entries that are directories or files (ie. exclude Git submodules)
+            if (entry.isTree() || entry.isFile()) {
         
-                    if (entry.isTree()) {
-                    
-                        //Entry is a directory. Recursively call countLinesInDirectory()
-                        
-                        getTreeByEntry(entry, function(error, tree) {
-                        
-                            countLinesInDirectory(tree, callback);
-                        });
-                    
-                    } else {
-            
-                        //Entry is a file
-                        
-                        countLinesInFile(entry, callback);
-                    }
-                });
+                //Wrap in a self-invoking function to preserve scope
+                (function(entry) {
                 
-            })(entry);
+                    asyncFunctions.push(function(callback) {
+            
+                        if (entry.isTree()) {
+                        
+                            //Entry is a directory. Recursively call countLinesInDirectory()
+                            
+                            getTreeByEntry(entry, function(error, tree) {
+                            
+                                countLinesInDirectory(tree, callback);
+                            });
+                        
+                        } else if (entry.isFile()) {
+                
+                            //Entry is a file
+                            
+                            countLinesInFile(entry, callback);
+                        }
+                    });
+                    
+                })(entry);
+            }
         }
         
         async.series(asyncFunctions, function(error, fileLines) {
