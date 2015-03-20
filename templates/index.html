@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Unit Test ROI Analyzer</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+    <!-- Custom styles for this template -->
+    <link href="css/index.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Unit Test ROI Analyzer</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+<!--
+          <form class="navbar-form navbar-right">
+            <div class="form-group">
+              <input type="text" placeholder="Email" class="form-control">
+            </div>
+            <div class="form-group">
+              <input type="password" placeholder="Password" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-success">Sign in</button>
+          </form>-->
+        </div><!--/.navbar-collapse -->
+      </div>
+    </nav>
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+        <h1>Are you not testing enough?</h1>
+        <p>Unit Test ROI Analyzer can shed insight to how much your Quality Engineering practices are paying off.</p>
+        <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more &raquo;</a></p>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-4">
+          <h2>Integrations</h2>
+          <p>Unit Test ROI Analyzer uses GitHub and Plotly APIs to access a projects details and create meaningful graphs.</p>
+          <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+        </div>
+        <div class="col-md-4">
+          <h2>Questions</h2>
+          <p>Is it possible that a relation exists between the amount of work that goes into creating test cases and the number of bugs that a project experiences? How does this change over time?</p>
+          <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+       </div>
+        <div class="col-md-4">
+          <h2>Metrics</h2>
+          <p>Measuring these normally unquantifiable data sets requires defining metrics. Unit Test ROI Analyzer counts lines of code over time to track the changes in your test repository as well as seperating defects from features.</p>
+          <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+        </div>
+      </div>
+
+
+
+      <hr>
+
+      <div class="app">
+        <div class="form centre">
+        <form class="form-analyze">
+          <h2 class="form-analyze-heading">Try it out</h2>
+          <label for="gitHubUsername" class="sr-only">GitHub Username</label>
+          <input type="text" id="gitHubUsername" class="form-control" placeholder="GitHub Username" required autofocus>
+          <label for="inputPassword" class="sr-only">GitHub Password</label>
+          <input type="password" id="gitHubPassword" class="form-control" placeholder="GitHub Password" required>
+
+          <label for="gitHubRepo" class="sr-only">GitHub Repository</label>
+          <input type="text" id="gitHubRepo" class="form-control" placeholder="GitHub Repository" required autofocus>
+
+          <label for="repoTestDir" class="sr-only">GitHub Repository Test Directory</label>
+          <input type="text" id="repoTestDir" class="form-control" placeholder="Repository Test Directory" required autofocus>
+
+          <button class="btn btn-lg btn-primary btn-block" type="submit">Analyze</button>
+        </form>
+        </div>
+
+        <div style="display: none;" class="result centre">
+          <!-- fill with sample result -->
+          <a href="#" class="back">Go Back</a>
+          <div style="width: 1200px; height: 700px; line-height: 700px; text-align: center;">
+          <img class="loader" src="img/loader.gif"/>
+          <iframe style="display: none;" width="1200" height="700" frameborder="0" seamless="seamless" scrolling="no" src="https://plot.ly/~seng371/147.embed"></iframe>
+          </div>
+        </div>
+
+        <hr>
+      </div>
+      <footer>
+        <p>&copy; Jordan Heemskerk, Greg Richardson, Parker Atkins, Rabjot Aujla 2015</p>
+      </footer>
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/index.js"></script>
+  </body>
+</html>
+

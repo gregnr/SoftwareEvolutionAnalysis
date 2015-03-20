@@ -1,8 +1,8 @@
+var core = require("./core");
+var graph = require("./graph");
+
 var async = require("async");
-var nodegit = require("nodegit")
 var prompt = require("prompt");
-var mkdirp = require("mkdirp");
-var moment = require("moment");
 var yargs = require("yargs")
     .alias("u", "username")
     .alias("p", "password")
@@ -21,10 +21,6 @@ var yargs = require("yargs")
     .describe("h", "Show the help menu")
     .describe("k", "Filter issues by keyword(s) search");
 
-var analyser = require("./analyser");
-var issues = require("./issues");
-var sync = require("./sync");
-
 var argv = yargs.argv;
 
 //If --help argument present, display help and return
@@ -33,9 +29,6 @@ if (argv.help) {
     return;
 }
 
-//Initialize globals
-var gIssues = [];
-var gCommits = [];
 var gUsername;
 var gPassword;
 var gUrl;
@@ -44,8 +37,10 @@ var gPullRequestFlag;
 var gFilterIssueLabels;
 var gKeywords;
 
-//Async functions
-var promptCredentials = function(callback) {
+var gPlotlyGraphId;
+
+//Prompts user for arguments they didn't specify
+var promptArguments = function(callback) {
 
     var usernameConfig = {
         name: "username",
@@ -197,41 +192,33 @@ var promptCredentials = function(callback) {
     });
 };
 
-var loadIssues = function(callback) {
-    
-    issues.get(
+var analyseRepo = function(callback) {
 
-        function (err, result) {         
-    
-            gIssues = result;
-            callback(err, result);
-            return;
-        }, 
+    var config = {
+        username: gUsername,
+        password: gPassword,
+        repoUrl: gUrl,
+        testDirectory: gTestDirectory
+    };
+    console.log("test");
 
-        gUsername,
-        gPassword,
-        gUrl
-    );
-
+    core.analyseRepo(config, function(response) {
+        
+        gPlotlyGraphId = response.plotlyGraphId;
+        
+        callback();
+    });
 };
 
+var generateHtml = function(callback) {
 
-var analyseRepo = function (callback) {
+    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1);
+    
+    graph.generateHtml(repo_name, gPlotlyGraphId, callback);
+};
 
-    console.log("Beginning analysis");
-    analyser.analyse(gTestDirectory, gIssues, gCommits, gUrl, gPullRequestFlag, gFilterIssueLabels, gKeywords, callback);
-
-}
-
-
-var loadCommits = function (callback) {
-
-    sync.loadCommits(gCommits, gUrl, callback);
-
-}
-
-//main flow
-async.series([promptCredentials, loadIssues, loadCommits, analyseRepo], function(err) {
+//Main flow
+async.series([promptArguments, analyseRepo, generateHtml], function(err) {
     
     if (err) {
         console.error(err);

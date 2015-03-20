@@ -11,7 +11,8 @@ var templateName = "default.html";
 
 
 
-var renderHtml = function (repo_name, data, plotly_msg, callback) {
+var renderHtml = function (repo_name, plotlyGraphId, callback) {
+
     var template = swig.compileFile(templates + templateName);
 
     var now = new Date();
@@ -21,11 +22,12 @@ var renderHtml = function (repo_name, data, plotly_msg, callback) {
         if (err) {
 
             console.err("Couldn't create out directory: " + err);
+            callback(err);
 
         } else {
 
             var html_data = {
-                plotlyid: plotly_msg.url.split("/").slice(-1)[0], //extract plotly graph id from url              
+                plotlyid: plotlyGraphId,             
                 repo: repo_name,
                 date: now.toString()    
             }
@@ -34,50 +36,58 @@ var renderHtml = function (repo_name, data, plotly_msg, callback) {
             fs.writeFile("out/" + repo_name + " " + now + ".html", template(html_data), function (err) {
                 if (err) {
                     console.error(err);
+                    callback(err);
                 } else {
                     console.log("Results available at: out/" + repo_name+ " " + now + ".html");
+                    callback();
                 }
             });
-
         }
-       
-
     });
-
-
 }
 
+module.exports.generateGraph = function(repo, data, callback) {
 
-
-module.exports.graph_me  = function (repo, data, callback) {
+	var layout = {
 	
-	var layout = {title: "Change in Test Volume and Open Issues over Time",
-			autosize: false,
-			width: 1200,
-			height: 800,
-			xaxis: {
-				title: "Week Number"
-			},
-			yaxis: {
-				title: "Lines of Code"
-			},
-			yaxis2: {
-				title: "Issues",
-				side: "right",
-				overlaying: "y"
-			},
-		};
+        title: "Change in Test Volume and Open Issues over Time",
+		autosize: false,
+		width: 1200,
+		height: 800,
+		xaxis: {
+			title: "Week Number"
+		},
+		yaxis: {
+			title: "Lines of Code"
+		},
+		yaxis2: {
+			title: "Issues",
+			side: "right",
+			overlaying: "y"
+		},
+	};
 
-	var graphOptions = {layout: layout, 
-				filename: repo + " " + new Date(), 
-				fileopt: "overwrite"};
+    var graphOptions = {
+        layout: layout, 
+        filename: repo + " " + new Date(), 
+        fileopt: "overwrite"
+    };
 	
-	plotly.plot(data, graphOptions, function(err, msg){
+	plotly.plot(data, graphOptions, function(err, msg) {
+	    
 		console.log("graph generated");
-        renderHtml(repo, data, msg, callback);
+		
+		callback({
+		    plotlyUrl: msg.url,
+		    plotlyGraphId: msg.url.split("/").slice(-1)[0]
+		});
 	});
+};
 
-}
+module.exports.generateHtml = function (repo, plotlyGraphId, callback) {
+
+    renderHtml(repo, plotlyGraphId, callback);
+};
 
 
 
