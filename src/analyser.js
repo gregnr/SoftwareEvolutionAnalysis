@@ -8,6 +8,9 @@ var gIssues = [];
 var gCommits = [];
 var gUrl;
 var gTestDirectory;
+var gPullRequestFlag;
+var gFilterIssueLabels;
+var gKeywords;
 
 var getLineSum = function(commit, callback) {
 
@@ -174,20 +177,70 @@ var incrementDataSet = function (dataset, x) {
 }
 
 var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
-   
+    var issueLabels;
+    var issueTitle;
+    var issueBody;
+
     for (var j = 0; j < gIssues.length; j++) {
-        
+    
         var issue = gIssues[j];
         var issue_opened = moment(issue.created_at);
-        
-        //disregard all pull requests
-        //if (issue.pull_request !== undefined) continue;
-        if (issue_opened < currentWeek.clone().add(1, "week")  && 
-            issue_opened > currentWeek) {
-            incrementDataSet(openIssues, weekCounter);
+        var counted = false;
+ 
+        //Check gPullRequestFlag if 'y' skip issue
+        if(gPullRequestFlag == 'n'){
+            if (issue.pull_request !== undefined){ 
+                continue;
+            }
         }
+        //Check gFilterIssueLabels
+        if(gFilterIssueLabels && issue.labels !== undefined){
+            issueLabels = issue.labels;
+            for (x in issueLabels) {
+                if(gFilterIssueLabels.indexOf(issueLabels[x].name) > -1){
+                    if (issue_opened < currentWeek.clone().add(1, "week")  && 
+                            issue_opened > currentWeek) {
+                        incrementDataSet(openIssues, weekCounter);
+                        counted = true;
+                    }
+                }
+            }
+        }
+        //Check gKeywords
+        if(gKeywords && issue.title !== undefined && !counted){
+            issueTitle = issue.title;
+            if (issue.body !== undefined){
+                issueBody = issue.body;
+                for(x in gKeywords && !counted){
+                    if(issueBody.indexOf(gKeywords[x]) > -1){    
+                        if (issue_opened < currentWeek.clone().add(1, "week")  && 
+                                issue_opened > currentWeek) {
+                            incrementDataSet(openIssues, weekCounter);
+                            counted = true;
+                        }
+                    }
+                }
+            }
+            for (x in gKeywords) {
+                if(issueTitle.indexOf(gKeywords[x]) > -1 && !counted){
+                    if (issue_opened < currentWeek.clone().add(1, "week")  && 
+                            issue_opened > currentWeek) {
+                        incrementDataSet(openIssues, weekCounter);
+                        counted = true;
+                    }
+                }
+            }
+        }
+        //If keywords or labels specified continue here and do not count this issue
+        if (gKeywords || gFilterIssueLabels){
+        continue;
+        }
+        //Otherwise, count all issues
+        if (issue_opened < currentWeek.clone().add(1, "week")  && 
+                issue_opened > currentWeek) {
+            incrementDataSet(openIssues, weekCounter);
+        }     
     }
-
 }
 
 var processData = function(callback) {
@@ -197,7 +250,6 @@ var processData = function(callback) {
         
         var format = "MMM DD YYYY HH:mm:ss";
         gCommits[i].moment = moment((/.{4}(.{20}).*/).exec(gCommits[i].date()).slice(1), format);
-
     }
 
     gCommits.sort(function (a,b) {
@@ -305,13 +357,15 @@ var processData = function(callback) {
     });
 };
 
-module.exports.analyse = function (test, issues, commits, url, callback) {
+module.exports.analyse = function (test, issues, commits, url, prFlag, labels, keywords, callback) {
 
     gCommits = commits;
     gUrl = url;
     gIssues = issues;
-    gTestDirectory = test; 
+    gTestDirectory = test;
+    gPullRequestFlag = prFlag;
+    gFilterIssueLabels = labels; 
+    gKeywords = keywords;
 
     processData(callback);
 }
-

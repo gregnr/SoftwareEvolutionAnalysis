@@ -8,13 +8,19 @@ var yargs = require("yargs")
     .alias("p", "password")
     .alias("r", "repo")
     .alias("t", "testdir")
+    .alias("z", "pullrequest")
+    .alias("l", "filterissues")
     .alias("h", "help")
+    .alias("k", "keywords")
     .describe("u", "GitHub username")
     .describe("p", "GitHub password")
     .describe("r", "GitHub repository")
     .describe("t", "Unit test directory")
-    .describe("h", "Show the help menu");
-    
+    .describe("z", "Include pull requests (y/n)")
+    .describe("l", "Filter issues by given label(s)")
+    .describe("h", "Show the help menu")
+    .describe("k", "Filter issues by keyword(s) search");
+
 var argv = yargs.argv;
 
 //If --help argument present, display help and return
@@ -27,6 +33,9 @@ var gUsername;
 var gPassword;
 var gUrl;
 var gTestDirectory;
+var gPullRequestFlag;
+var gFilterIssueLabels;
+var gKeywords;
 
 var gPlotlyGraphId;
 
@@ -59,6 +68,26 @@ var promptArguments = function(callback) {
         message: "Directory containing unit tests to analyze"
     };
 
+    var pullrequestConfig = {
+        name: "pullrequest",
+        description: "Include pull requests (y/n)",
+        pattern: /^(y|n){1}$/,
+        message: "Include pull requests in analysis 'y'-yes or 'n'-no" 
+    };
+
+    var filterissuesConfig = {
+        name: "filterissues",
+        description: "Filter issues by given label(s)",
+        pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
+        message: "specify labels separated by comma's ex. ('bug, enhancement, UI')"
+    };
+
+    var keywordsConfig = {
+        name: "keywords",
+        description: "Filter issues by keyword(s) search",
+        pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
+        message: "specify keywords separated by comma's ex. ('UI, view, heatmap')"
+    };
     var properties = [];
 
     //Prompt user for arguments they didn't specify:
@@ -90,7 +119,29 @@ var promptArguments = function(callback) {
     } else {
         properties.push(testdirConfig);
     }
+    
+    //Pull requests flag
+    if (argv.pullrequest) {
+        gPullRequestFlag = argv.pullrequest;
+    } else {
+        properties.push(pullrequestConfig);
+    }
 
+    //Filter by label(s) 
+    if (argv.filterissues) {
+        gFilterIssueLabels = argv.filterissues;
+        gFilterIssueLabels = gFilterIssueLabels.split(", ");
+    } else {
+        properties.push(filterissuesConfig);
+    }
+
+    //Filter by keyword search 
+    if (argv.keywords) {
+        gKeywords = argv.keywords;
+        gKeywords = gKeywords.split(", ");
+    } else {
+        properties.push(keywordsConfig);
+    }
     //If user entered all arguments, return
     if (properties.length === 0) {
         callback();
@@ -123,8 +174,21 @@ var promptArguments = function(callback) {
         if (result.testdir) {
             gTestDirectory = result.testdir;
         }
+	
+    	if (result.pullrequest) {
+            gPullRequestFlag = result.pullrequest;
+        }
 
-        callback();
+	    if (result.filterissues) {
+            gFilterIssueLabels = result.filterissues;
+            gFilterIssueLabels = gFilterIssueLabels.split(", ");
+    	}	  
+ 
+	    if (result.keywords) {
+            gKeywords = result.keywords;
+            gKeywords = gKeywords.split(", ");
+	    }	   
+	callback();
     });
 };
 
@@ -136,6 +200,7 @@ var analyseRepo = function(callback) {
         repoUrl: gUrl,
         testDirectory: gTestDirectory
     };
+    console.log("test");
 
     core.analyseRepo(config, function(response) {
         
