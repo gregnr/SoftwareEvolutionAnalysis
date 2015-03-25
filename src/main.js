@@ -130,6 +130,7 @@ var promptArguments = function(callback) {
     //Filter by label(s) 
     if (argv.filterissues) {
         gFilterIssueLabels = argv.filterissues;
+        gFilterIssueLabels = gFilterIssueLabels.toUpperCase();
         gFilterIssueLabels = gFilterIssueLabels.split(", ");
     } else {
         properties.push(filterissuesConfig);
@@ -138,6 +139,7 @@ var promptArguments = function(callback) {
     //Filter by keyword search 
     if (argv.keywords) {
         gKeywords = argv.keywords;
+        gKeywords = gKeywords.toUpperCase();
         gKeywords = gKeywords.split(", ");
     } else {
         properties.push(keywordsConfig);
@@ -181,11 +183,13 @@ var promptArguments = function(callback) {
 
 	    if (result.filterissues) {
             gFilterIssueLabels = result.filterissues;
+            gFilterIssueLabels = gFilterIssueLabels.toUpperCase();
             gFilterIssueLabels = gFilterIssueLabels.split(", ");
     	}	  
  
 	    if (result.keywords) {
             gKeywords = result.keywords;
+            gKeywords = gKeywords.toUpperCase();
             gKeywords = gKeywords.split(", ");
 	    }	   
 	callback();
