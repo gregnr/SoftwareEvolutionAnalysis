@@ -205,8 +205,6 @@ var analyseRepo = function(callback) {
     };
 
     core.analyseRepo(config, function(response) {
-    
-        console.log("core analyzed:", response);
         
         gPlotlyGraphId = response.plotlyGraphId;
         
