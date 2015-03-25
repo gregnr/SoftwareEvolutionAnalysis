@@ -197,7 +197,7 @@ var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
         if(gFilterIssueLabels && issue.labels !== undefined){
             issueLabels = issue.labels;
             for (x in issueLabels) {
-                if(gFilterIssueLabels.indexOf(issueLabels[x].name) > -1){
+                if(gFilterIssueLabels.indexOf(issueLabels[x].name.toUpperCase()) > -1){
                     if (issue_opened < currentWeek.clone().add(1, "week")  && 
                             issue_opened > currentWeek) {
                         incrementDataSet(openIssues, weekCounter);
@@ -208,9 +208,9 @@ var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
         }
         //Check gKeywords
         if(gKeywords && issue.title !== undefined && !counted){
-            issueTitle = issue.title;
+            issueTitle = issue.title.toUpperCase();
             if (issue.body !== undefined){
-                issueBody = issue.body;
+                issueBody = issue.body.toUpperCase();
                 for(x in gKeywords && !counted){
                     if(issueBody.indexOf(gKeywords[x]) > -1){    
                         if (issue_opened < currentWeek.clone().add(1, "week")  && 
