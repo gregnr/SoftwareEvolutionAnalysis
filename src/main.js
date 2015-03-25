@@ -198,9 +198,11 @@ var analyseRepo = function(callback) {
         username: gUsername,
         password: gPassword,
         repoUrl: gUrl,
-        testDirectory: gTestDirectory
+        testDirectory: gTestDirectory,
+        pullRequestFlag: gPullRequestFlag,
+        filterIssueLabels: gFilterIssueLabels,
+        filterIssueKeywords: gKeywords
     };
-    console.log("test");
 
     core.analyseRepo(config, function(response) {
         
