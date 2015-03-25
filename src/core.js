@@ -17,6 +17,9 @@ var gUsername;
 var gPassword;
 var gUrl;
 var gTestDirectory;
+var gPullRequestFlag;
+var gFilterIssueLabels;
+var gKeywords;
 
 
 var loadIssues = function(callback) {
@@ -46,7 +49,7 @@ var analyseRepo = function (callback) {
 
     console.log("Beginning analysis");
     
-    analyser.analyse(gTestDirectory, gIssues, gCommits, gUrl, function(data) {
+    analyser.analyse(gTestDirectory, gIssues, gCommits, gUrl, gPullRequestFlag, gFilterIssueLabels, gKeywords, function(data) {
     
         gTimeData = data.time;
         gNumberIssuesData = data.numberIssues;
@@ -91,6 +94,9 @@ module.exports.analyseRepo = function (config, callback) {
     gPassword = config.password;
     gUrl = config.repoUrl;
     gTestDirectory = config.testDirectory;
+    gPullRequestFlag = config.pullRequestFlag;
+    gFilterIssueLabels = config.filterIssueLabels;
+    gKeywords = config.filterIssueKeywords;
 
     async.series([loadIssues, loadCommits, analyseRepo, generateGraph], function(err) {
         
