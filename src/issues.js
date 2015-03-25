@@ -91,7 +91,7 @@ var mergeNewIssues = function (newIssues, cacheIssues) {
 var getCacheContents = function () {
 
 
-    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1);
+    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1).toLowerCase();
 
     try {
 

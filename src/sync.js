@@ -27,7 +27,7 @@ var loadRepoHistory = function (callback) {
    
     //parse string params
     var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1);
-    var repo_path = "./.repo_cache/" + repo_name;
+    var repo_path = "./.repo_cache/" + repo_name.toLowerCase();
     
     
     // create .repo_cache directory if it does not exist
