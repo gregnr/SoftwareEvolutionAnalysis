@@ -192,7 +192,7 @@ var promptArguments = function(callback) {
             gKeywords = gKeywords.toUpperCase();
             gKeywords = gKeywords.split(", ");
 	    }	   
-	callback();
+        callback();
     });
 };
 

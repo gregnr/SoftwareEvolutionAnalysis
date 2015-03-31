@@ -89,13 +89,12 @@ var mergeNewIssues = function (newIssues, cacheIssues) {
 }
 
 var getCacheContents = function () {
-
-
-    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1).toLowerCase();
+    
+    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl)[1].toLowerCase();
 
     try {
 
-    var content = fs.readFileSync(".issue_cache/" + repo_name, "utf8");
+        var content = fs.readFileSync(".issue_cache/" + repo_name, "utf8");
     
     } catch (e) {
         if (e.code === 'ENOENT') {
@@ -116,7 +115,7 @@ var getCacheContents = function () {
 
 var cacheIssues = function (issues, timestamp) {
       
-    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1);
+    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl)[1];
     
     mkdirp(".issue_cache", function (err) {
         if (err) console.error(err);

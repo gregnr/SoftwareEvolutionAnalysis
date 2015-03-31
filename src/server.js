@@ -22,7 +22,10 @@ io.on("connection", function(socket) {
             username: data.user,
             password: data.pass,
             repoUrl: data.repo,
-            testDirectory: data.testDir
+            testDirectory: data.testDir,
+            pullRequestFlag: "n",
+            filterIssueLabels: undefined,
+            filterIssueKeywords: undefined
         };
         
         core.analyseRepo(config, function(response) {
