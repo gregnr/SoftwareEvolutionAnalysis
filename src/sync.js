@@ -26,7 +26,7 @@ var scrapeCommits = function (firstCommitOnMaster, callback) {
 var loadRepoHistory = function (callback) {
    
     //parse string params
-    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl).slice(1);
+    var repo_name = (/^.*\/([^\/]+)$/).exec(gUrl)[1];
     var repo_path = "./.repo_cache/" + repo_name.toLowerCase();
     
     
