@@ -13,8 +13,6 @@ io.on("connection", function(socket) {
     console.log("Client connected");
     
     socket.on("AnalyzeRepoRequest", function(data) {
-    
-        console.log("Config data: " + data);
         
         //TODO Sanatize data from HTML form?
         
@@ -31,8 +29,15 @@ io.on("connection", function(socket) {
         core.analyseRepo(config, function(response) {
             
             console.log("AnalyzeRepoRequest complete");
+            console.log("Response:", response);
             
             socket.emit("AnalyzeRepoResponse", response);
+            
+        }, function(error) {
+        
+            console.error(error);
+            
+            socket.emit("Error", error);
         });
     });
 });

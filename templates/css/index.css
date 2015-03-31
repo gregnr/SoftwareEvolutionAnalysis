@@ -35,3 +35,9 @@ body {
 	width: 66px;
 	height: 66px;
 }
+
+.app .error {
+    margin-top: 15px;
+    color: #FF0000;
+    font-weight: bold;
+}
