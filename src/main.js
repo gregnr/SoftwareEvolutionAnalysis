@@ -74,7 +74,7 @@ var promptArguments = function(callback) {
         {
             name: "filterissues",
             description: "Filter issues by given label(s)",
-            pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
+            pattern: /^([a-zA-Z\s]+)(,\s[a-zA-Z\s]+)*$/,
             message: "specify labels separated by comma's ex. ('bug, enhancement, UI')"
         },
         {
