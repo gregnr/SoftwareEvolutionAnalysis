@@ -28,8 +28,8 @@ io.on("connection", function(socket) {
         var keywords = data.keywords;
 
         if (keywords) { 
-            keywords = labels.toUpperCase();
-            keywords = labels.split(", ");
+            keywords = keywords.toUpperCase();
+            keywords = keywords.split(", ");
         }
 
   
