@@ -213,6 +213,10 @@ var analyseRepo = function(callback) {
         gPlotlyGraphId = response.plotlyGraphId;
         
         callback();
+        
+    }, function(error) {
+        
+        callback(error);
     });
 };
 

@@ -88,7 +88,7 @@ var generateGraph = function(callback) {
     });
 };
 
-module.exports.analyseRepo = function (config, callback) {
+module.exports.analyseRepo = function (config, callback, errback) {
 
     gUsername = config.username;
     gPassword = config.password;
@@ -101,7 +101,8 @@ module.exports.analyseRepo = function (config, callback) {
     async.series([loadIssues, loadCommits, analyseRepo, generateGraph], function(err) {
         
         if (err) {
-            console.error(err);
+            errback(err);
+            return;
         }
         
         callback({

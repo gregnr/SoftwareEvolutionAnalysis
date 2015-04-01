@@ -4,13 +4,14 @@ var socket = io();
 //get DOM elements
 var form = $("form.form-analyze");
 var form_div = $("div.app div.form");
+var error_div = $("div.app div.error");
 var results_div = $("div.app div.result");
 var iframe = results_div.find("iframe");
 var loader = results_div.find("img.loader");
 
 //TODO: handle request cancellation better
 //track if we need to ignore requests
-var ignore = 0;
+var ignoreNextResponse = false;
 
 
 //main flow
@@ -35,8 +36,8 @@ $(document).ready(function () {
 	//socket interactions
 	socket.on("AnalyzeRepoResponse", function (msg) {
 
-		if (ignore != 0) {
-			ignore = ignore - 1;
+		if (ignoreNextResponse === true) {
+		    ignoreNextResponse = false;
 			return;
 		}
 
@@ -52,14 +53,22 @@ $(document).ready(function () {
 			scrollTop: result_div.offset().top + "px"
 		}, "fast");
 	});
-
-
+	
+	socket.on("Error", function(msg) {
+	
+		cancelOpenRequestsAndShowForm();
+		
+		ignoreNextResponse = false;
+	
+	    var errorSpan = $('<span />').html(msg);
+	    
+	    error_div.append(errorSpan);
+	});
 });
 
 function cancelOpenRequestsAndShowForm() {
 
-    //increase ignore count
-	ignore++;
+	ignoreNextResponse = true;
 
     //show/hide UI elements
 	iframe.hide();
@@ -77,6 +86,12 @@ function submitAnalyzeRepo(form) {
 
     //TODO: form validation
 	//if (!validateAnalyzeRepo(form)) //fail out
+	
+	//Clear the error div
+	error_div.empty();
+	
+	//Show loader
+	$(".loader").show();
 
     //build request
 	AnalyzeRepo.user = form.find("input#gitHubUsername").val();
@@ -87,6 +102,8 @@ function submitAnalyzeRepo(form) {
     console.log("emit");
     //emit request
 	socket.emit("AnalyzeRepoRequest", AnalyzeRepo);
+	
+	ignoreNextResponse = false;
 
     //disable form button
 	form.find("button").attr("disabled", "disabled");
