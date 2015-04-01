@@ -10,16 +10,16 @@ var yargs = require("yargs")
     .alias("t", "testdir")
     .alias("z", "pullrequest")
     .alias("l", "filterissues")
-    .alias("h", "help")
     .alias("k", "keywords")
+    .alias("h", "help")
     .describe("u", "GitHub username")
     .describe("p", "GitHub password")
     .describe("r", "GitHub repository")
     .describe("t", "Unit test directory")
     .describe("z", "Include pull requests (y/n)")
     .describe("l", "Filter issues by given label(s)")
-    .describe("h", "Show the help menu")
-    .describe("k", "Filter issues by keyword(s) search");
+    .describe("k", "Filter issues by keyword(s) search")
+    .describe("h", "Show the help menu");
 
 var argv = yargs.argv;
 
@@ -39,116 +39,54 @@ var gKeywords;
 
 var gPlotlyGraphId;
 
-//Prompts user for arguments they didn't specify
+//Prompts user for arguments
 var promptArguments = function(callback) {
-
-    var usernameConfig = {
-        name: "username",
-        description: "GitHub Username",
-        pattern: /^[a-zA-Z\s\-]+$/,
-        message: "Username must be only letters, spaces, or dashes"
-    };
-
-    var passwordConfig = {
-        name: "password",
-        description: "GitHub Password",
-        hidden: true
-    };
-
-    var repoConfig = {
-        name: "url",
-        description: "GitHub Repository URL",
-        pattern: /https?:\/\/github.com\/*/,
-        message: "URL must be to a GitHub repository"
-    };
-
-    var testdirConfig = {
-        name: "testdir",
-        description: "Unit Test Directory",
-        message: "Directory containing unit tests to analyze"
-    };
-
-    var pullrequestConfig = {
-        name: "pullrequest",
-        description: "Include pull requests (y/n)",
-        pattern: /^(y|n){1}$/,
-        message: "Include pull requests in analysis 'y'-yes or 'n'-no" 
-    };
-
-    var filterissuesConfig = {
-        name: "filterissues",
-        description: "Filter issues by given label(s)",
-        pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
-        message: "specify labels separated by comma's ex. ('bug, enhancement, UI')"
-    };
-
-    var keywordsConfig = {
-        name: "keywords",
-        description: "Filter issues by keyword(s) search",
-        pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
-        message: "specify keywords separated by comma's ex. ('UI, view, heatmap')"
-    };
-    var properties = [];
-
-    //Prompt user for arguments they didn't specify:
-
-    //Username
-    if (argv.username) {
-        gUsername = argv.username;
-    } else {
-        properties.push(usernameConfig);
-    }
-
-    //Password
-    if (argv.password) {
-        gPassword = argv.password;
-    } else {
-        properties.push(passwordConfig);
-    }
-
-    //Repository
-    if (argv.repo) {
-        gUrl = argv.repo;
-    } else {
-        properties.push(repoConfig);
-    }
-
-    //Test directory
-    if (argv.testdir) {
-        gTestDirectory = argv.testdir;
-    } else {
-        properties.push(testdirConfig);
-    }
     
-    //Pull requests flag
-    if (argv.pullrequest) {
-        gPullRequestFlag = argv.pullrequest;
-    } else {
-        properties.push(pullrequestConfig);
-    }
+    var properties = [
+        {
+            name: "username",
+            description: "GitHub Username",
+            pattern: /^[a-zA-Z\s\-]+$/,
+            message: "Username must be only letters, spaces, or dashes"
+        },
+        {
+            name: "password",
+            description: "GitHub Password",
+            hidden: true
+        }, 
+        {
+            name: "repo",
+            description: "GitHub Repository URL",
+            pattern: /https?:\/\/github.com\/*/,
+            message: "URL must be to a GitHub repository"
+        },
+        {
+            name: "testdir",
+            description: "Unit Test Directory",
+            message: "Directory containing unit tests to analyze"
+        }, 
+        {
+            name: "pullrequest",
+            description: "Include pull requests (y/n)",
+            pattern: /^(y|n){1}$/,
+            message: "Include pull requests in analysis 'y'-yes or 'n'-no" 
+        },
+        {
+            name: "filterissues",
+            description: "Filter issues by given label(s)",
+            pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
+            message: "specify labels separated by comma's ex. ('bug, enhancement, UI')"
+        },
+        {
+            name: "keywords",
+            description: "Filter issues by keyword(s) search",
+            pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
+            message: "specify keywords separated by comma's ex. ('UI, view, heatmap')"
+        }
+    ];
 
-    //Filter by label(s) 
-    if (argv.filterissues) {
-        gFilterIssueLabels = argv.filterissues;
-        gFilterIssueLabels = gFilterIssueLabels.toUpperCase();
-        gFilterIssueLabels = gFilterIssueLabels.split(", ");
-    } else {
-        properties.push(filterissuesConfig);
-    }
-
-    //Filter by keyword search 
-    if (argv.keywords) {
-        gKeywords = argv.keywords;
-        gKeywords = gKeywords.toUpperCase();
-        gKeywords = gKeywords.split(", ");
-    } else {
-        properties.push(keywordsConfig);
-    }
-    //If user entered all arguments, return
-    if (properties.length === 0) {
-        callback();
-        return;
-    }
+    //Override prompts for arguments specified in the command line
+    prompt.override = argv;
 
     //Init prompt
     prompt.start();
@@ -169,8 +107,8 @@ var promptArguments = function(callback) {
             gPassword = result.password;
         }
 
-        if (result.url) {
-            gUrl = result.url;
+        if (result.repo) {
+            gUrl = result.repo;
         }
 
         if (result.testdir) {
@@ -191,7 +129,8 @@ var promptArguments = function(callback) {
             gKeywords = result.keywords;
             gKeywords = gKeywords.toUpperCase();
             gKeywords = gKeywords.split(", ");
-	    }	   
+	    }
+	    
         callback();
     });
 };
