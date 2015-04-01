@@ -25,6 +25,31 @@ $(document).ready(function () {
 
 	form.find("input#gitHubRepo").blur(function (input) {
 		console.log("Validate and get tags for: " + input.target.value);
+        var repo =  form.find("input#gitHubRepo").val();
+        if (repo == "") {
+            $(".labels").empty();
+            return;
+        }
+        repo = repo.split("github.com/")[1];
+        $.ajax({
+            url: "https://api.github.com/repos/" + repo + "/labels",
+            headers: {
+                Origin: "http://localhost/"
+            },
+            success:  function (data) {
+
+                $(".labels").empty();
+                $(".labels").append("<h4>Filter by labels</h4><a id='label-selectall' href='#'>Select All</a><br />");
+                $.each(data, function (index, labelobj) {
+                    var textColor = getTextColorFromBackground(labelobj.color);
+                    $(".labels").append("<div style='display: inline-block;'><input type='checkbox' data-label-name='" + labelobj.name + "' name='label' /><span class='github-label' style='background-color: #" + labelobj.color +"; color: #" + textColor + "'>" + labelobj.name + "</span></div>"); 
+                    $("#label-selectall").click(function (event) {
+                        event.preventDefault();
+                        $("input[type='checkbox'][name='label']").attr('checked', true);
+                    })
+                });
+            }
+        });
 	});
 
 	$("a.back").click(function (event) {
@@ -98,6 +123,9 @@ function submitAnalyzeRepo(form) {
 	AnalyzeRepo.pass = form.find("input#gitHubPassword").val();
 	AnalyzeRepo.repo = form.find("input#gitHubRepo").val();
 	AnalyzeRepo.testDir = form.find("input#repoTestDir").val();
+    AnalyzeRepo.labels = getLabels();
+
+    console.log(AnalyzeRepo.labels);
 
     console.log("emit");
     //emit request
@@ -116,4 +144,44 @@ function submitAnalyzeRepo(form) {
 function validateAnalyzeRepo(form) {
     //TODO: form validation
 	return true;
+}
+
+function getTextColorFromBackground(background) {
+    var rgb = hexToRgb(background);
+
+    var brightness  =  Math.sqrt( (0.241*rgb.r*rgb.r) + 
+                                  (0.691*rgb.g*rgb.g) + 
+                                  (0.068*rgb.b*rgb.b) );
+
+    if (brightness > 130) {
+        return "000000";
+    } else {
+        return "FFFFFF";
+    }
+
+
+}
+
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+function getLabels() {    
+    var labels = "";
+    
+    $("input[type='checkbox'][name='label']:checked").each(function () {
+        labels += $(this).attr("data-label-name") + ", ";
+    });
+
+    if (labels != "") {
+        return labels.slice(0, -2); //remove last comma and space
+    } else {
+        return "";
+    }   
+
 }
