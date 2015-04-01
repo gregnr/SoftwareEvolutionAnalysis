@@ -15,17 +15,22 @@ io.on("connection", function(socket) {
     socket.on("AnalyzeRepoRequest", function(data) {
         
         //TODO Sanatize data from HTML form?
-        
+      
+        var labels = data.labels;
+        labels = labels.toUpperCase();
+        labels = labels.split(", ");
+
+  
         var config = {
             username: data.user,
             password: data.pass,
             repoUrl: data.repo,
             testDirectory: data.testDir,
             pullRequestFlag: "n",
-            filterIssueLabels: undefined,
+            filterIssueLabels: labels,
             filterIssueKeywords: undefined
         };
-        
+
         core.analyseRepo(config, function(response) {
             
             console.log("AnalyzeRepoRequest complete");
