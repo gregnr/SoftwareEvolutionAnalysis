@@ -232,7 +232,7 @@ var countIssuesForWeek = function (currentWeek, weekCounter, openIssues) {
             }
         }
         //If keywords or labels specified continue here and do not count this issue
-        if (gKeywords || gFilterIssueLabels){
+        if (gKeywords || gFilterIssueLabels || counted){
         continue;
         }
         //Otherwise, count all issues
