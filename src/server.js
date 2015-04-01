@@ -16,9 +16,21 @@ io.on("connection", function(socket) {
         
         //TODO Sanatize data from HTML form?
       
+        
         var labels = data.labels;
-        labels = labels.toUpperCase();
-        labels = labels.split(", ");
+
+        if (labels) {
+            labels = labels.toUpperCase();
+            labels = labels.split(", ");
+        }
+
+
+        var keywords = data.keywords;
+
+        if (keywords) { 
+            keywords = labels.toUpperCase();
+            keywords = labels.split(", ");
+        }
 
   
         var config = {
@@ -28,7 +40,7 @@ io.on("connection", function(socket) {
             testDirectory: data.testDir,
             pullRequestFlag: "n",
             filterIssueLabels: labels,
-            filterIssueKeywords: undefined
+            filterIssueKeywords: keywords
         };
 
         core.analyseRepo(config, function(response) {

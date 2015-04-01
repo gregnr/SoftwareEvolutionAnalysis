@@ -124,10 +124,13 @@ function submitAnalyzeRepo(form) {
 	AnalyzeRepo.repo = form.find("input#gitHubRepo").val();
 	AnalyzeRepo.testDir = form.find("input#repoTestDir").val();
     AnalyzeRepo.labels = getLabels();
+    AnalyzeRepo.keywords =  form.find("input#keywords").val();
 
-    console.log(AnalyzeRepo.labels);
+    if (AnalyzeRepo.labels == "") AnalyzeRepo.labels = undefined;
+    if (AnalyzeRepo.keywords == "") AnalyzeRepo.keywords = undefined;
 
-    console.log("emit");
+    
+
     //emit request
 	socket.emit("AnalyzeRepoRequest", AnalyzeRepo);
 	
