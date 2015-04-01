@@ -125,6 +125,8 @@ function submitAnalyzeRepo(form) {
 	AnalyzeRepo.testDir = form.find("input#repoTestDir").val();
     AnalyzeRepo.labels = getLabels();
     AnalyzeRepo.keywords =  form.find("input#keywords").val();
+    AnalyzeRepo.pullRequest = getPullRequest();    
+
 
     if (AnalyzeRepo.labels == "") AnalyzeRepo.labels = undefined;
     if (AnalyzeRepo.keywords == "") AnalyzeRepo.keywords = undefined;
@@ -187,4 +189,12 @@ function getLabels() {
         return "";
     }   
 
+}
+
+function getPullRequest() {
+    if ($("input#pullRequest").is(':checked')) {
+        return "y";
+    } else {
+        return "n";
+    }
 }

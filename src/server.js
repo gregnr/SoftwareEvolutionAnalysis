@@ -38,7 +38,7 @@ io.on("connection", function(socket) {
             password: data.pass,
             repoUrl: data.repo,
             testDirectory: data.testDir,
-            pullRequestFlag: "n",
+            pullRequestFlag: data.pullRequest,
             filterIssueLabels: labels,
             filterIssueKeywords: keywords
         };
