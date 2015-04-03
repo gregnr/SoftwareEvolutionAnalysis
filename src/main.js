@@ -11,6 +11,7 @@ var yargs = require("yargs")
     .alias("z", "pullrequest")
     .alias("l", "filterissues")
     .alias("k", "keywords")
+    .alias("b", "branch")
     .alias("h", "help")
     .describe("u", "GitHub username")
     .describe("p", "GitHub password")
@@ -19,6 +20,7 @@ var yargs = require("yargs")
     .describe("z", "Include pull requests (y/n)")
     .describe("l", "Filter issues by given label(s)")
     .describe("k", "Filter issues by keyword(s) search")
+    .describe("b", "Branch to analyse (default is master)")
     .describe("h", "Show the help menu");
 
 var argv = yargs.argv;
@@ -36,6 +38,7 @@ var gTestDirectory;
 var gPullRequestFlag;
 var gFilterIssueLabels;
 var gKeywords;
+var gBranch;
 
 var gPlotlyGraphId;
 
@@ -82,6 +85,11 @@ var promptArguments = function(callback) {
             description: "Filter issues by keyword(s) search",
             pattern: /^([a-zA-Z]+)(,\s[a-zA-Z]+)*$/,
             message: "specify keywords separated by comma's ex. ('UI, view, heatmap')"
+        },
+        {
+            name: "branch",
+            description: "Branch to analyse (default: master)",
+            message: "Specify what branch to analyse"
         }
     ];
 
@@ -130,6 +138,10 @@ var promptArguments = function(callback) {
             gKeywords = gKeywords.toUpperCase();
             gKeywords = gKeywords.split(", ");
 	    }
+
+        if (result.branch) {
+            gBranch = result.branch;
+        }
 	    
         callback();
     });
@@ -144,7 +156,8 @@ var analyseRepo = function(callback) {
         testDirectory: gTestDirectory,
         pullRequestFlag: gPullRequestFlag,
         filterIssueLabels: gFilterIssueLabels,
-        filterIssueKeywords: gKeywords
+        filterIssueKeywords: gKeywords,
+        branch: gBranch
     };
 
     core.analyseRepo(config, function(response) {

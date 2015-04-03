@@ -7,9 +7,11 @@ var moment = require("moment");
 //Initialize globals
 var gCommits = [];
 var gUrl;
+var gBranch;
 
 var scrapeCommits = function (firstCommitOnMaster, callback) {
    
+    console.log("Scrape commits");
     var history = firstCommitOnMaster.history();
     
     history.on("commit", function (commit) { 
@@ -53,11 +55,11 @@ var loadRepoHistory = function (callback) {
                 }, function (err) { console.error(err); return;})
 
                 .then(function () {
-                    return repository.mergeBranches("master", "origin/master");
+                    return repository.mergeBranches(gBranch, "origin/" + gBranch);
                 }, function (err) {console.error(err); return;})
 
                 .then(function () {
-                    return repository.getMasterCommit();
+                    return repository.getBranchCommit(gBranch);
                 })
 
                 .then(function (firstCommitOnMaster) {
@@ -74,7 +76,7 @@ var loadRepoHistory = function (callback) {
             nodegit.Clone.clone(gUrl, repo_path, { ignoreCertErrors: 1})
 
                 .then(function (repo) {
-                    return repo.getMasterCommit();
+                    return repo.getBranchCommit(gBranch);
                 }, function (err) { console.error(err); return;})
 
                 .then(function (firstCommitOnMaster) {
@@ -85,8 +87,9 @@ var loadRepoHistory = function (callback) {
 };
 
 
-module.exports.loadCommits = function (coms, url, callback) {
+module.exports.loadCommits = function (coms, url, branch, callback) {
     gCommits = coms;
     gUrl = url;
+    gBranch = branch;
     loadRepoHistory(callback);
 }

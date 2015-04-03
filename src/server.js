@@ -40,7 +40,8 @@ io.on("connection", function(socket) {
             testDirectory: data.testDir,
             pullRequestFlag: data.pullRequest,
             filterIssueLabels: labels,
-            filterIssueKeywords: keywords
+            filterIssueKeywords: keywords,
+            branch: data.branch
         };
 
         core.analyseRepo(config, function(response) {

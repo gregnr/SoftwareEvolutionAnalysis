@@ -126,10 +126,12 @@ function submitAnalyzeRepo(form) {
     AnalyzeRepo.labels = getLabels();
     AnalyzeRepo.keywords =  form.find("input#keywords").val();
     AnalyzeRepo.pullRequest = getPullRequest();    
+    AnalyzeRepo.branch = form.find("#repoBranch").val();
 
 
     if (AnalyzeRepo.labels == "") AnalyzeRepo.labels = undefined;
     if (AnalyzeRepo.keywords == "") AnalyzeRepo.keywords = undefined;
+    if (AnalyzeRepo.branch == "") AnalyzeRepo.branch = undefined;
 
     
 
