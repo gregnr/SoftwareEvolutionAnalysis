@@ -308,7 +308,7 @@ var processData = function(callback) {
         
             lineCount = linesOfCode[i];
             
-            linesOfCodeDerivative.push(lineCount - prevLineCount);
+            linesOfCodeDerivative.push(Math.abs(lineCount - prevLineCount));
             
             prevLineCount = lineCount;
         }
