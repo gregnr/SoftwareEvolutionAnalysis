@@ -20,7 +20,7 @@ var gTestDirectory;
 var gPullRequestFlag;
 var gFilterIssueLabels;
 var gKeywords;
-
+var gBranch;
 
 var loadIssues = function(callback) {
     
@@ -42,7 +42,7 @@ var loadIssues = function(callback) {
 
 var loadCommits = function (callback) {
 
-    sync.loadCommits(gCommits, gUrl, callback);
+    sync.loadCommits(gCommits, gUrl, gBranch, callback);
 };
 
 var analyseRepo = function (callback) {
@@ -97,6 +97,13 @@ module.exports.analyseRepo = function (config, callback, errback) {
     gPullRequestFlag = config.pullRequestFlag;
     gFilterIssueLabels = config.filterIssueLabels;
     gKeywords = config.filterIssueKeywords;
+
+    if (config.branch == undefined) {
+        gBranch = "master";
+    } else {
+        gBranch = config.branch;
+    }
+
 
     async.series([loadIssues, loadCommits, analyseRepo, generateGraph], function(err) {
         
